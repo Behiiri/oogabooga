@@ -13,11 +13,14 @@
 // #define STR(s) ((string){ length_of_null_terminated_string((const char*)s), (u8*)s })
 // extern Gfx_Image *load_image_from_disk(string path, Allocator allocator);
 // extern u64 length_of_null_terminated_string(const char* cstring);
+#if !JUMBO_BUILD
+typedef union Vector2 Vector2;
+#endif
 
 // main.c
-extern int get_random_int();
+extern int get_random_int(void);
 extern int get_random_int_range(int min, int max);
-extern Vector2 world_to_screen(float x, float y);
+extern vec screen_to_world(float x, float y);
 
 // world.c
 extern void world_init(void);
@@ -37,6 +40,7 @@ extern entity_id allocate_tile(void);
 extern entity_id allocate_bullet(void);
 
 
+extern void render_game(void);
 extern void render_init(void);
 extern void render_tiles(void);
 #endif

@@ -2,7 +2,7 @@
 //#include <stdlib.h>
 #include <string.h>
 
-// Layout of entities on the end array
+// Layout of entities on the ent array
 // ent[0] -> player
 // ent[1] - ent[TILE_ENTITY_MAX] -> tiles
 // ent[TILE_ENTITY_MAX] - ent[BULLET_ENTITY_MAX] -> bullets
@@ -10,8 +10,8 @@
 
 entity ent[MAX_ENTITIES];
 static entity_id max_tile_id = 0;
-entity_id max_bullet_id = TILE_ENTITY_MAX - 1;
-entity_id max_entity_id = BULLET_ENTITY_MAX - 1;
+static entity_id max_bullet_id = TILE_ENTITY_MAX - 1;
+static entity_id max_entity_id = BULLET_ENTITY_MAX - 1;
 
 entity_id allocate_tile(void)
 {

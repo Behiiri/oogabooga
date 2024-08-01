@@ -73,8 +73,11 @@ enum
     ET_bullet05,
     ET_bullet_tank,
     ET__bullets_end = ET_bullet_tank,
-    
-    ET_mummy,
+
+    ET__monsters_start,
+    ET_mummy = ET__monsters_start,
+    ET_spider,
+    ET__monsters_end = ET_spider,
     
     ET_pickup_a,
     ET_pickup_b,
@@ -83,42 +86,12 @@ enum
     ET_pickup_s,
 
     UI_special_ammo,
+    UI_fire_rate,
     
     ET__count
 };
 
-struct
-{
-    int type;
-    float scale;
-    char *filename;
-    int x;
-    int y;
-} sprite_files[] =
-{
-    { ET__none,            0.0f,  "", 0, 0 },
-    { ET_player,           1.0f, "../dat/art/player.png",              10,  15  },
-    { ET_ground,           1.0f, "../dat/art/ground.png",              16,  16  },
-    { ET_ground2,          1.0f, "../dat/art/ground2.png",             16,  16  },
-    { ET_ground3,          1.0f, "../dat/art/ground3.png",             16,  16  },
-    { ET_bullet00,         1.0f, "../dat/art/bullet00.png",             3,   3  },
-    { ET_bullet01,         0.6f, "../dat/art/bullet01.png",             5,   5  },
-    { ET_bullet02,         1.0f, "../dat/art/bullet02.png",             4,   4  },
-    { ET_bullet03,         0.4f, "../dat/art/bullet03.png",             5,   5  },
-    { ET_bullet04,         0.6f, "../dat/art/bullet04.png",             5,   5  },
-    { ET_bullet05,         0.6f, "../dat/art/bullet05.png",             6,   6  },
-    { ET_bullet_tank,      1.5f, "../dat/art/bullet_tank.png",         12,   5  },
-    { ET_mummy,            1.0f, "../dat/art/mummy.png",               10,  13  },
-    { ET_pickup_a,         0.5f, "../dat/art/pickup_a.png",            14,  14  },
-    { ET_pickup_b,         0.5f, "../dat/art/pickup_b.png",            14,  14  },
-    { ET_pickup_c,         0.5f, "../dat/art/pickup_c.png",            14,  14  },
-    { ET_pickup_m,         0.5f, "../dat/art/pickup_m.png",            14,  14  },
-    { ET_pickup_s,         0.5f, "../dat/art/pickup_s.png",            14,  14  },
-    { UI_special_ammo,     1.0f, "../dat/art/ui_special_ammo.png",     16,  16  },
-    
-};
-
-struct
+typedef struct
 {
     float zoom;
     float player_speed;
@@ -127,18 +100,10 @@ struct
     int mummy_hp;
     float mummy_speed;
     int bullet;
-    float fire_rate;
-} cfg =
-{
-    2.5f,
-    100.0f,
-    (vec){180, 180},
-    3.0f,
-    5,
-    25.0f,
-    ET_bullet05,
-    5.0f
-};
+    int fire_rate;
+} config;
+
+extern config cfg;
 
 #define TILE_ENTITY_MAX   3000
 #define BULLET_ENTITY_MAX 4000
@@ -152,5 +117,9 @@ extern entity_id max_bullet_id;
 
 extern int program_mode;
 extern double world_timer;
-// extern float zoom;
+
+extern float dt;
+extern double bullet_fire_cd;
+
+extern entity_id player_id;
 #endif

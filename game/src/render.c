@@ -1,5 +1,4 @@
 #include "game_funcs.h"
-
 #include "math.h"
 
 #define TILE_X 32
@@ -15,12 +14,37 @@ typedef struct
 
 sprite sprites[ET__count];
 
-// Gfx_Image* load_sprite(char *filename)
-// {
-//     Gfx_Image *image = load_image_from_disk(STR(filename), get_heap_allocator());
-//     assert(image, "load_sprite: Failed loading image");
-//     return image;
-// }
+struct
+{
+    int type;
+    float scale;
+    char *filename;
+    int x;
+    int y;
+} sprite_files[ET__count] =
+{
+    { ET__none,            0.0f,  "", 0, 0 },
+    { ET_player,           1.0f, "../dat/art/player.png",              10,  15  },
+    { ET_ground,           1.0f, "../dat/art/ground.png",              16,  16  },
+    { ET_ground2,          1.0f, "../dat/art/ground2.png",             16,  16  },
+    { ET_ground3,          1.0f, "../dat/art/ground3.png",             16,  16  },
+    { ET_bullet00,         1.0f, "../dat/art/bullet00.png",             3,   3  },
+    { ET_bullet01,         0.6f, "../dat/art/bullet01.png",             5,   5  },
+    { ET_bullet02,         1.0f, "../dat/art/bullet02.png",             4,   4  },
+    { ET_bullet03,         0.4f, "../dat/art/bullet03.png",             5,   5  },
+    { ET_bullet04,         0.6f, "../dat/art/bullet04.png",             5,   5  },
+    { ET_bullet05,         0.6f, "../dat/art/bullet05.png",             6,   6  },
+    { ET_bullet_tank,      1.5f, "../dat/art/bullet_tank.png",         12,   5  },
+    { ET_mummy,            1.0f, "../dat/art/mummy.png",               10,  13  },
+    { ET_spider,           1.0f, "../dat/art/spider.png",              16,  15  },
+    { ET_pickup_a,         0.5f, "../dat/art/pickup_a.png",            14,  14  },
+    { ET_pickup_b,         0.5f, "../dat/art/pickup_b.png",            14,  14  },
+    { ET_pickup_c,         0.5f, "../dat/art/pickup_c.png",            14,  14  },
+    { ET_pickup_m,         0.5f, "../dat/art/pickup_m.png",            14,  14  },
+    { ET_pickup_s,         0.5f, "../dat/art/pickup_s.png",            14,  14  },
+    { UI_special_ammo,     1.0f, "../dat/art/ui_special_ammo.png",     16,  16  },
+    { UI_fire_rate,        1.0f, "../dat/art/ui_fire_rate.png",        16,  16  },    
+};
 
 Gfx_Image* load_sprite_by_id(int id)
 {
@@ -48,7 +72,7 @@ void render_init(void)
     }
 }
 
-extern Vector2 player_pos;
+extern vec player_pos;
 void render_player(void)
 {
     Matrix4 m = m4_scalar(1.0);
@@ -137,27 +161,115 @@ void render_tiles(void)
         }
 }
 
-extern Gfx_Font* font;
-extern const u32 font_height;
-extern int special_ammo;
-void render_ui()
+extern Vector2 vec_to_v2(vec v);
+
+Gfx_Font *font;
+int font_height = 48;
+void draw_mouse_coordinates(void)
 {
-    Gfx_Image *g = sprites[UI_special_ammo].tex;
-    Vector2 sz = sprites[UI_special_ammo].size;
-    sz         = v2_mul(sz, v2(4.f/cfg.zoom,4.f/cfg.zoom));
-    int y = window.height/3*2 - sz.y/2;
-    int x = window.width/20;
-    Vector2 pos = world_to_screen(x, y);
-    //Vector2 pos = v2(x, y);
-    draw_image(g, pos, sz, COLOR_WHITE);
-    
-    pos.y -= sz.y/2;
-    pos.x += sz.x/3;
-    float scale = 0.2f;
-    draw_text(font, sprint(get_heap_allocator(), STR("%d"), special_ammo),
-              font_height, pos, v2(scale * 4.f/cfg.zoom, scale * 4.f/cfg.zoom), COLOR_WHITE);
+    float mouse_x = input_frame.mouse_x;
+    float mouse_y = input_frame.mouse_y;
+
+    vec vpos = screen_to_world(mouse_x, mouse_y);
+    Vector2 pos = vec_to_v2(vpos);
+    draw_text(font, sprint(get_heap_allocator(), STR("%.2f %.2f"), pos.x, pos.y), font_height, pos, v2(0.1, 0.1), COLOR_WHITE);
 }
 
+void draw_text_on_screen(int x, int y, float scale,  string str)
+{
+    y = window.scaled_height - y - 18;
+    vec vpos = screen_to_world(x, y);
+    Vector2 pos = vec_to_v2(vpos);
+    draw_text(font, str, font_height, pos, v2(scale, scale), COLOR_WHITE);
+}
+
+void draw_info(void)
+{
+    float s = 0.1f;
+    int fh = font_height;
+    int p = 15;
+    int o = 0;
+
+    static float temp_fps, temp_dt;
+    static double last_info_update_time = 0;
+    if(world_timer - last_info_update_time > 0.1f)
+    {
+        last_info_update_time = world_timer;
+        temp_fps = 1.0f/dt;
+        temp_dt = dt;
+    }
+    
+    draw_text_on_screen(0, (p+fh*s)*o++, s, sprint(get_heap_allocator(), STR("fps:  %.2f  dt: %f"), temp_fps, temp_dt));
+    //draw_text_on_screen(0, (p+fh*s)*o++, s, sprint(get_heap_allocator(), STR("max_tile_id:  %d"), max_tile_id));
+    //draw_text_on_screen(0, (p+fh*s)*o++, s, sprint(get_heap_allocator(), STR("max_bullet_id:  %d"), max_bullet_id));
+    //draw_text_on_screen(0, (p+fh*s)*o++, s, sprint(get_heap_allocator(), STR("max_entity_id:  %d"), max_entity_id));
+    draw_text_on_screen(0, (p+fh*s)*o++, s, sprint(get_heap_allocator(), STR("time:  %f"), world_timer));
+    draw_text_on_screen(0, (p+fh*s)*o++, s, sprint(get_heap_allocator(), STR("fire_rate:  %f"), 1.0f/bullet_fire_cd));
+}
+
+extern Gfx_Font* font;
+extern int font_height;
+extern int special_ammo;
+void render_ui(void)
+{
+    draw_frame.view = m4_make_scale(v3(1.0, 1.0, 1.0));
+    draw_frame.projection = m4_make_orthographic_projection(0, 320,
+                                                            0, 180, -1, 10);
+    float scale = 0.2f;
+
+    int fh = font_height;
+    int p = 16 + fh*scale + 5;
+    int o = 0;
+    int x = window.width/24;
+
+    { // special ammo
+        Gfx_Image *g = sprites[UI_special_ammo].tex;
+        Vector2 sz = sprites[UI_special_ammo].size;
+        int y = window.height/4*3 - sz.y/2;
+        vec vpos = screen_to_world(x, y);
+        Vector2 pos = vec_to_v2(vpos);
+        pos.y += p*o++;
+        draw_image(g, pos, sz, COLOR_WHITE);
+    
+        string str = sprint(get_heap_allocator(), STR("%d"), special_ammo);
+        Gfx_Text_Metrics str_metrics = measure_text(font, str, fh, v2(scale, scale));
+
+        pos.y -= sz.y/2;
+        pos.x += sz.x/2 - str_metrics.functional_size.x/2.0f;
+
+        draw_text(font, str, fh, pos, v2(scale, scale), COLOR_WHITE);
+    }
+    
+    { // fire rate
+        Gfx_Image *g = sprites[UI_fire_rate].tex;
+        Vector2 sz = sprites[UI_fire_rate].size;
+        int y = window.height/4*3 - sz.y/2;
+        vec vpos = screen_to_world(x, y);
+        Vector2 pos = vec_to_v2(vpos);
+        pos.y -= p*o++;
+        draw_image(g, pos, sz, COLOR_WHITE);
+
+        string str = sprint(get_heap_allocator(), STR("%d"), cfg.fire_rate);
+        Gfx_Text_Metrics str_metrics = measure_text(font, str, fh, v2(scale, scale));
+
+        pos.y -= sz.y/2;
+        pos.x += sz.x/2 - str_metrics.functional_size.x/2.0f;
+        draw_text(font, str, fh, pos, v2(scale, scale), COLOR_WHITE);
+    }
+
+    { // World Time
+        float scale = 0.25;
+        string str = sprint(get_heap_allocator(), STR("time:  %.2f"), world_timer);
+        Gfx_Text_Metrics str_metrics = measure_text(font, str, fh, v2(scale, scale));
+        int y = str_metrics.functional_size.y*2 + 5;
+        int x = window.width/2  - str_metrics.functional_size.x;
+        
+        draw_text_on_screen(x, y, scale, str); 
+    }
+
+}
+
+static Bool should_draw_info = 0;
 void render_game(void)
 {
     render_tiles();
@@ -165,4 +277,8 @@ void render_game(void)
     render_bullets();
     render_player();
     render_ui();
+    
+    if(should_draw_info)
+        draw_info();
 }
+
