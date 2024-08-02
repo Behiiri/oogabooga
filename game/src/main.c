@@ -14,6 +14,8 @@ static float  dt;
 static vec player_pos;
 static vec camera_pos;
 
+static int kill_count;
+
 config cfg =
 {
     2.5f,
@@ -145,17 +147,15 @@ Bool can_fire()
 void decrease_fire_cd(float percent)
 {
     bullet_fire_cd = bullet_fire_cd * (1.0f - percent/100.0f);
-    if(bullet_fire_cd < 0.06f) bullet_fire_cd = 0.06f;
+    if(bullet_fire_cd < 0.02f) bullet_fire_cd = 0.02f;
 }
 
 void increase_fire_rate(int amount)
 {
     cfg.fire_rate = cfg.fire_rate + amount;
     if(cfg.fire_rate > 20) cfg.fire_rate = 20;
-
     bullet_fire_cd = 1.0f/cfg.fire_rate;
 }
-
 
 void process_game_input(vec *axis)
 {
@@ -165,6 +165,7 @@ void process_game_input(vec *axis)
     if (is_key_down('D')) axis->x += 1.0f;
     if (is_key_down('S')) axis->y -= 1.0f;
     if (is_key_down('W')) axis->y += 1.0f;
+
     if (is_key_just_pressed('Q'))
         next_weapon();
     if (is_key_just_pressed('E'))
@@ -291,6 +292,7 @@ void update_entities(void)
             if(ent[i].type >= ET__monsters_start && ent[i].type <= ET__monsters_end) {
                 if(ent[i].hp <= 0) {
                     ent[i].valid = 0;
+                    kill_count++;
                     int rand = get_random_int_range(0, 100);
                     if(rand < 15)  {
                         create_entity(ET_pickup_a, ent[i].pos);
@@ -357,11 +359,10 @@ void update_entities(void)
 double game_start_time;
 void gameloop(void)
 {
-    world_timer += dt;
-    update_view();
+    if(program_mode == MODE_game) {
+        world_timer += dt;
+        update_view();
 
-    if(program_mode == MODE_game)
-    {
         vec input_axis = (vec){0, 0};
         process_game_input(&input_axis);
 
@@ -380,10 +381,10 @@ void gameloop(void)
 
         ent[0].pos.x = player_pos.x;
         ent[0].pos.y = player_pos.y;
+        
+        update_entities();
+        render_game();
     }
-
-    update_entities();
-    render_game();
 }
 
 

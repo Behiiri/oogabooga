@@ -3,20 +3,6 @@
 
 #include "game_data.h"
 
-// #define FORWARD_DECLARE(name) typedef struct name name;
-
-// // oogabooga.c
-// FORWARD_DECLARE(Gfx_Image);
-// FORWARD_DECLARE(string);
-// FORWARD_DECLARE(Allocator);
-// #define fixed_string STR
-// #define STR(s) ((string){ length_of_null_terminated_string((const char*)s), (u8*)s })
-// extern Gfx_Image *load_image_from_disk(string path, Allocator allocator);
-// extern u64 length_of_null_terminated_string(const char* cstring);
-#if !JUMBO_BUILD
-typedef union Vector2 Vector2;
-#endif
-
 // main.c
 extern int get_random_int(void);
 extern int get_random_int_range(int min, int max);
@@ -39,7 +25,7 @@ extern entity_id allocate_player(void);
 extern entity_id allocate_tile(void);
 extern entity_id allocate_bullet(void);
 
-
+// render.c
 extern void render_game(void);
 extern void render_init(void);
 extern void render_tiles(void);

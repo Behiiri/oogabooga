@@ -1,6 +1,3 @@
-#include "game_funcs.h"
-#include "math.h"
-
 #define TILE_X 32
 #define TILE_Y 32
 
@@ -23,34 +20,37 @@ struct
     int y;
 } sprite_files[ET__count] =
 {
-    { ET__none,            0.0f,  "", 0, 0 },
-    { ET_player,           1.0f, "../dat/art/player.png",              10,  15  },
-    { ET_ground,           1.0f, "../dat/art/ground.png",              16,  16  },
-    { ET_ground2,          1.0f, "../dat/art/ground2.png",             16,  16  },
-    { ET_ground3,          1.0f, "../dat/art/ground3.png",             16,  16  },
-    { ET_bullet00,         1.0f, "../dat/art/bullet00.png",             3,   3  },
-    { ET_bullet01,         0.6f, "../dat/art/bullet01.png",             5,   5  },
-    { ET_bullet02,         1.0f, "../dat/art/bullet02.png",             4,   4  },
-    { ET_bullet03,         0.4f, "../dat/art/bullet03.png",             5,   5  },
-    { ET_bullet04,         0.6f, "../dat/art/bullet04.png",             5,   5  },
-    { ET_bullet05,         0.6f, "../dat/art/bullet05.png",             6,   6  },
-    { ET_bullet_tank,      1.5f, "../dat/art/bullet_tank.png",         12,   5  },
-    { ET_mummy,            1.0f, "../dat/art/mummy.png",               10,  13  },
-    { ET_spider,           1.0f, "../dat/art/spider.png",              16,  15  },
-    { ET_pickup_a,         0.5f, "../dat/art/pickup_a.png",            14,  14  },
-    { ET_pickup_b,         0.5f, "../dat/art/pickup_b.png",            14,  14  },
-    { ET_pickup_c,         0.5f, "../dat/art/pickup_c.png",            14,  14  },
-    { ET_pickup_m,         0.5f, "../dat/art/pickup_m.png",            14,  14  },
-    { ET_pickup_s,         0.5f, "../dat/art/pickup_s.png",            14,  14  },
-    { UI_special_ammo,     1.0f, "../dat/art/ui_special_ammo.png",     16,  16  },
-    { UI_fire_rate,        1.0f, "../dat/art/ui_fire_rate.png",        16,  16  },    
+    { ET__none,            0.0f,   "", 0, 0 },
+    { ET_player,           1.0f,   "../dat/art/player.png",              10,  15  },
+    { ET_ground,           1.0f,   "../dat/art/ground.png",              16,  16  },
+    { ET_ground2,          1.0f,   "../dat/art/ground2.png",             16,  16  },
+    { ET_ground3,          1.0f,   "../dat/art/ground3.png",             16,  16  },
+    { ET_ground4,          1.0f,   "../dat/art/ground4.png",             16,  16  },
+    { ET_bullet00,         1.0f,   "../dat/art/bullet00.png",             3,   3  },
+    { ET_bullet01,         0.6f,   "../dat/art/bullet01.png",             5,   5  },
+    { ET_bullet02,         1.0f,   "../dat/art/bullet02.png",             4,   4  },
+    { ET_bullet03,         0.4f,   "../dat/art/bullet03.png",             5,   5  },
+    { ET_bullet04,         0.6f,   "../dat/art/bullet04.png",             5,   5  },
+    { ET_bullet05,         0.6f,   "../dat/art/bullet05.png",             6,   6  },
+    { ET_bullet_tank,      1.5f,   "../dat/art/bullet_tank.png",         12,   5  },
+    { ET_mummy,            1.0f,   "../dat/art/mummy.png",               10,  13  },
+    { ET_spider,           1.0f,   "../dat/art/spider.png",              16,  15  },
+    { ET_pickup_a,         0.5f,   "../dat/art/pickup_a.png",            14,  14  },
+    { ET_pickup_b,         0.5f,   "../dat/art/pickup_b.png",            14,  14  },
+    { ET_pickup_c,         0.5f,   "../dat/art/pickup_c.png",            14,  14  },
+    { ET_pickup_m,         0.5f,   "../dat/art/pickup_m.png",            14,  14  },
+    { ET_pickup_s,         0.5f,   "../dat/art/pickup_s.png",            14,  14  },
+    { UI_special_ammo,     1.0f,   "../dat/art/ui_special_ammo.png",     16,  16  },
+    { UI_fire_rate,        1.0f,   "../dat/art/ui_fire_rate.png",        16,  16  },
+    { UI_skull,            0.625f, "../dat/art/ui_skull.png",            16,  16  },
 };
 
 Gfx_Image* load_sprite_by_id(int id)
 {
     assert(sprite_files[id].type == id);
-    char * filaname = sprite_files[id].filename;
-    Gfx_Image *image = load_image_from_disk(STR(filaname), get_heap_allocator());
+    char * filename = sprite_files[id].filename;
+    Gfx_Image *image = load_image_from_disk(STR(filename), get_heap_allocator());
+    log("load_sprite: Failed loading image: %cs\n", filename);
     assert(image, "load_sprite: Failed loading image");
     return image; 
 }
@@ -220,22 +220,21 @@ void render_ui(void)
     int fh = font_height;
     int p = 16 + fh*scale + 5;
     int o = 0;
-    int x = window.width/24;
+    int x = 10;
+    int y = 120;
 
     { // special ammo
         Gfx_Image *g = sprites[UI_special_ammo].tex;
         Vector2 sz = sprites[UI_special_ammo].size;
-        int y = window.height/4*3 - sz.y/2;
-        vec vpos = screen_to_world(x, y);
-        Vector2 pos = vec_to_v2(vpos);
-        pos.y += p*o++;
+        Vector2 pos = v2(x, y);
+        pos.y -= p*o++;
         draw_image(g, pos, sz, COLOR_WHITE);
     
         string str = sprint(get_heap_allocator(), STR("%d"), special_ammo);
         Gfx_Text_Metrics str_metrics = measure_text(font, str, fh, v2(scale, scale));
 
-        pos.y -= sz.y/2;
-        pos.x += sz.x/2 - str_metrics.functional_size.x/2.0f;
+        pos.y = pos.y -sz.y/2;
+        pos.x = pos.x +sz.x/2 - str_metrics.functional_size.x/2.0f;
 
         draw_text(font, str, fh, pos, v2(scale, scale), COLOR_WHITE);
     }
@@ -243,9 +242,7 @@ void render_ui(void)
     { // fire rate
         Gfx_Image *g = sprites[UI_fire_rate].tex;
         Vector2 sz = sprites[UI_fire_rate].size;
-        int y = window.height/4*3 - sz.y/2;
-        vec vpos = screen_to_world(x, y);
-        Vector2 pos = vec_to_v2(vpos);
+        Vector2 pos = v2(x, y);
         pos.y -= p*o++;
         draw_image(g, pos, sz, COLOR_WHITE);
 
@@ -259,12 +256,27 @@ void render_ui(void)
 
     { // World Time
         float scale = 0.25;
-        string str = sprint(get_heap_allocator(), STR("time:  %.2f"), world_timer);
-        Gfx_Text_Metrics str_metrics = measure_text(font, str, fh, v2(scale, scale));
-        int y = str_metrics.functional_size.y*2 + 5;
-        int x = window.width/2  - str_metrics.functional_size.x;
+        string str = sprint(get_heap_allocator(), STR("time:  %4.2f"), world_timer);
+        Gfx_Text_Metrics str_metrics = measure_text(font, STR("time:  8888.88"), fh, v2(scale, scale));
+        int y = window.height/20 + str_metrics.functional_size.y;
+        int x = window.width/2 - str_metrics.functional_size.x;
         
         draw_text_on_screen(x, y, scale, str); 
+    }
+
+    { // skull annd kill count
+        Gfx_Image *g = sprites[UI_skull].tex;
+        Vector2 sz = sprites[UI_skull].size;
+        int y = 10;
+        Vector2 pos = v2(x, y);
+        draw_image(g, pos, sz, COLOR_WHITE);
+
+        string str = sprint(get_heap_allocator(), STR("%d"), kill_count);
+        // Gfx_Text_Metrics str_metrics = measure_text(font, str, fh, v2(scale, scale));
+        
+        pos.y = pos.y + sz.y/3;
+        pos.x = pos.x + sz.x + 3;
+        draw_text(font, str, fh, pos, v2(scale, scale), COLOR_WHITE);
     }
 
 }

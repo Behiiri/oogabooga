@@ -52,7 +52,7 @@ typedef struct
 enum
 {
     MODE_game,
-    Mode_menu
+    MODE_menu
 };
 
 // entity types
@@ -63,6 +63,7 @@ enum
     ET_ground,
     ET_ground2,
     ET_ground3,
+    ET_ground4,
 
     ET__bullets_start,
     ET_bullet00 = ET__bullets_start,
@@ -87,6 +88,7 @@ enum
 
     UI_special_ammo,
     UI_fire_rate,
+    UI_skull,
     
     ET__count
 };
@@ -97,10 +99,10 @@ typedef struct
     float player_speed;
     vec   player_start_pos;
     float bullet_speed;
-    int mummy_hp;
+    int   mummy_hp;
     float mummy_speed;
-    int bullet;
-    int fire_rate;
+    int   bullet;
+    int   fire_rate;
 } config;
 
 extern config cfg;
@@ -122,4 +124,5 @@ extern float dt;
 extern double bullet_fire_cd;
 
 extern entity_id player_id;
+extern int kill_count;
 #endif
