@@ -50,8 +50,7 @@ Gfx_Image* load_sprite_by_id(int id)
     assert(sprite_files[id].type == id);
     char * filename = sprite_files[id].filename;
     Gfx_Image *image = load_image_from_disk(STR(filename), get_heap_allocator());
-    log("load_sprite: Failed loading image: %cs\n", filename);
-    assert(image, "load_sprite: Failed loading image");
+    assert(image, "load_sprite: Failed loading image %cs", filename);
     return image; 
 }
 
@@ -205,6 +204,10 @@ void draw_info(void)
     //draw_text_on_screen(0, (p+fh*s)*o++, s, sprint(get_heap_allocator(), STR("max_entity_id:  %d"), max_entity_id));
     draw_text_on_screen(0, (p+fh*s)*o++, s, sprint(get_heap_allocator(), STR("time:  %f"), world_timer));
     draw_text_on_screen(0, (p+fh*s)*o++, s, sprint(get_heap_allocator(), STR("fire_rate:  %f"), 1.0f/bullet_fire_cd));
+
+    draw_text_on_screen(0, (p+fh*s)*o++, s, sprint(get_heap_allocator(), STR("tile count:  %d"), max_tile_id - 1));
+    draw_text_on_screen(0, (p+fh*s)*o++, s, sprint(get_heap_allocator(), STR("bullet count:  %d"), max_bullet_id - TILE_ENTITY_MAX));
+    draw_text_on_screen(0, (p+fh*s)*o++, s, sprint(get_heap_allocator(), STR("entity count:  %d"), max_entity_id - BULLET_ENTITY_MAX));    
 }
 
 extern Gfx_Font* font;

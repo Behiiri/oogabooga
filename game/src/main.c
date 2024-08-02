@@ -3,6 +3,7 @@
 
 #include "game_funcs.h"
 #include "render.c" // render.c needs to access some engine specific types
+#include "menu.c"
 
 #if JUMBO_BUILD
 #include "world.c"
@@ -52,8 +53,7 @@ Bool almost_equals(float a, float b, float epsilon) {
 Bool animate_f32_to_d(float* v, float d, float dt, float t)
 {
     *v += (d - *v) * (1.0 - pow(2.0f, -t * dt));
-    if (almost_equals(*v, d, 0.1f))
-    {
+    if (almost_equals(*v, d, 0.1f)) {
         *v = d;
         return True; // reached
     }
@@ -160,12 +160,17 @@ void increase_fire_rate(int amount)
 void process_game_input(vec *axis)
 {
     if (is_key_just_pressed(KEY_ESCAPE))
-        window.should_close = true;
+        toggle_menu();
     if (is_key_down('A')) axis->x -= 1.0f;
     if (is_key_down('D')) axis->x += 1.0f;
     if (is_key_down('S')) axis->y -= 1.0f;
     if (is_key_down('W')) axis->y += 1.0f;
-
+    
+    if (is_key_just_pressed('M')) {
+        program_mode = MODE_menu;
+        consume_key_just_pressed('M');
+    }
+    
     if (is_key_just_pressed('Q'))
         next_weapon();
     if (is_key_just_pressed('E'))
@@ -301,7 +306,8 @@ void update_entities(void)
                     }
 
                     int type = get_random_int_range(ET__monsters_start, ET__monsters_end);
-                    cteate_monster(type, (vec) {player_pos.x, player_pos.y} , 400, cfg.mummy_hp);
+                    cteate_monster(type, player_pos, 400, cfg.mummy_hp);
+                    cteate_monster(type, player_pos, 400, cfg.mummy_hp);
                 }
 
                 if(ent[i].valid)
@@ -312,31 +318,7 @@ void update_entities(void)
                     ent[i].pos.x = v.x;
                     ent[i].pos.y = v.y;
                 }
-            
             }
-            
-            // if(ent[i].type == ET_spider) {
-            //     if(ent[i].hp <= 0) {
-            //         ent[i].valid = 0;
-            //         int rand = get_random_int_range(0, 100);
-            //         if(rand < 15)  {
-            //             create_entity(ET_pickup_a, ent[i].pos);
-            //         } else if(rand >= 15 && rand < 30) {
-            //             create_entity(ET_pickup_s, ent[i].pos);
-            //         }
-
-            //         cteate_monster(ET_spider, (vec) {player_pos.x, player_pos.y} , 400, cfg.mummy_hp);
-            //     }
-
-            //     if(ent[i].valid)
-            //     {
-            //         vec v = vec_to_v2(ent[i].pos);
-            //         move_towards(&v, player_pos, dt, cfg.mummy_speed);
-
-            //         ent[i].pos.x = v.x;
-            //         ent[i].pos.y = v.y;
-            //     }
-            // }
 
             if(ent[i].type == ET_pickup_a) {
                 if(check_collision(i, player_id))
@@ -381,9 +363,14 @@ void gameloop(void)
 
         ent[0].pos.x = player_pos.x;
         ent[0].pos.y = player_pos.y;
+
         
         update_entities();
         render_game();
+    } else if(program_mode == MODE_menu)
+    {
+        process_menu_input();
+        draw_menu_view();
     }
 }
 
@@ -401,6 +388,8 @@ void game_init(void)
 
     world_init();
     render_init();
+    
+    menu_init();
 }
 
 int entry(int argc, char **argv)

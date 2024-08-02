@@ -29,4 +29,7 @@ extern entity_id allocate_bullet(void);
 extern void render_game(void);
 extern void render_init(void);
 extern void render_tiles(void);
+
+// main.c
+extern void toggle_menu(void);
 #endif

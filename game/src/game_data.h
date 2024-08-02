@@ -10,7 +10,6 @@ typedef unsigned short uint16;
 typedef   signed short  int16;
 typedef unsigned int   uint32;
 typedef   signed int    int32;
-typedef unsigned int   uint32;
 typedef          int     Bool;
 
 #ifndef True
@@ -43,10 +42,10 @@ typedef struct
     vec pos;
     vec velocity; // only used for bullets
     vec rotation; // only used for bullets
-    int type;
     int hp;
-    uint32 valid;
-    int sprite_id;
+    int type : 31;
+    uint32 valid : 1;
+    
 } entity;
 
 enum
@@ -107,9 +106,9 @@ typedef struct
 
 extern config cfg;
 
-#define TILE_ENTITY_MAX   3000
-#define BULLET_ENTITY_MAX 4000
-#define MAX_ENTITIES      5000
+#define TILE_ENTITY_MAX   4096
+#define BULLET_ENTITY_MAX 4352
+#define MAX_ENTITIES      65536
 
 extern entity ent[MAX_ENTITIES];
 
