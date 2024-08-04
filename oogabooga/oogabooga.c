@@ -118,7 +118,7 @@
 
 #define OGB_VERSION_MAJOR 0
 #define OGB_VERSION_MINOR 1
-#define OGB_VERSION_PATCH 2
+#define OGB_VERSION_PATCH 3
 
 #define OGB_VERSION (OGB_VERSION_MAJOR*1000000+OGB_VERSION_MINOR*1000+OGB_VERSION_PATCH)
 
@@ -228,6 +228,7 @@ typedef u8 bool;
 
 #ifdef _WIN32
 	#define COBJMACROS
+	#undef noreturn
 	#include <Windows.h>
     #if CONFIGURATION == DEBUG
     	#include <dbghelp.h>
@@ -384,7 +385,7 @@ void oogabooga_init(u64 program_memory_size) {
 	Cpu_Capabilities features = query_cpu_capabilities();
 	os_init(program_memory_size);
 	heap_init();
-	temporary_storage_init();
+	temporary_storage_init(TEMPORARY_STORAGE_SIZE);
 	log_info("Ooga booga version is %d.%02d.%03d", OGB_VERSION_MAJOR, OGB_VERSION_MINOR, OGB_VERSION_PATCH);
 #ifndef OOGABOOGA_HEADLESS
 	gfx_init();

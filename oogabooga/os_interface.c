@@ -87,8 +87,7 @@ inline int vsnprintf(char* buffer, size_t n, const char* fmt, va_list args) {
 
 
 
-bool ogb_instance
-os_grow_program_memory(size_t new_size);
+
 
 ///
 ///
@@ -103,8 +102,11 @@ typedef struct Thread {
 	u64 id; // This is valid after os_thread_start
 	Context initial_context;
 	void* data;
+	u64 temporary_storage_size; // Defaults to KB(10)
 	Thread_Proc proc;
 	Thread_Handle os_handle;
+	
+	
 	Allocator allocator;  // Deprecated !! #Cleanup
 } Thread;
 
@@ -200,6 +202,7 @@ typedef enum Os_Io_Open_Flags {
 	// To append, pass WRITE flag without CREATE flag
 } Os_Io_Open_Flags;
 
+// Returns OS_INVALID_FILE on fail
 File ogb_instance
 os_file_open_s(string path, Os_Io_Open_Flags flags);
 
@@ -376,12 +379,15 @@ void fprint_va_list_buffered(File f, const string fmt, va_list args) {
 
 ///
 ///
-// Memory
+// Queries
 ///
 ogb_instance void*
 os_get_stack_base();
 ogb_instance void*
 os_get_stack_limit();
+
+ogb_instance u64
+os_get_number_of_logical_processors();
 
 
 ///
@@ -391,7 +397,8 @@ os_get_stack_limit();
 ogb_instance string*
 os_get_stack_trace(u64 *trace_count, Allocator allocator);
 
-void dump_stack_trace() {
+inline void 
+dump_stack_trace() {
 	u64 count;
 	string *strings = os_get_stack_trace(&count, get_temporary_allocator());
 	
@@ -401,9 +408,83 @@ void dump_stack_trace() {
 	}
 }
 
+
+///
+///
+// Memory
+///
+
+// #Global
+ogb_instance void *program_memory;
+ogb_instance void *program_memory_next;
+ogb_instance u64 program_memory_capacity;
+ogb_instance Mutex_Handle program_memory_mutex;
+
+#if !OOGABOOGA_LINK_EXTERNAL_INSTANCE
+void *program_memory = 0;
+void *program_memory_next = 0;
+u64 program_memory_capacity = 0;
+Mutex_Handle program_memory_mutex = 0;
+#endif // NOT OOGABOOGA_LINK_EXTERNAL_INSTANCE
+
+bool ogb_instance
+os_grow_program_memory(size_t new_size);
+
+// BEWARE:
+// - size must be aligned to os.page_size
+// - Pages will not always belong to the same region (although they will be contigious in virtual adress space)
+// - Pages will be locked (Win32 PAGE_NOACCESS) so you need to unlock with os_unlock_program_memory_pages() before use.
+ogb_instance void*
+os_reserve_next_memory_pages(u64 size);
+
+void ogb_instance
+os_unlock_program_memory_pages(void *start, u64 size);
+void ogb_instance
+os_lock_program_memory_pages(void *start, u64 size);
+
+///
+///
+// Mouse pointer
+
+typedef enum Mouse_Pointer_Kind {
+    MOUSE_POINTER_DEFAULT           = 0,   // https://learn.microsoft.com/en-us/windows/win32/menurc/images/idc_arrow.png
+    MOUSE_POINTER_TEXT_SELECT       = 10,  // https://learn.microsoft.com/en-us/windows/win32/menurc/images/idc_ibeam.png
+    MOUSE_POINTER_BUSY              = 20,  // https://learn.microsoft.com/en-us/windows/win32/menurc/images/idc_wait.png
+    MOUSE_POINTER_BUSY_BACKGROUND   = 30,  // https://learn.microsoft.com/en-us/windows/win32/menurc/images/idc_appstarting.png
+    MOUSE_POINTER_CROSS             = 40,  // https://learn.microsoft.com/en-us/windows/win32/menurc/images/idc_cross.png
+    MOUSE_POINTER_ARROW_N           = 50,  // https://learn.microsoft.com/en-us/windows/win32/menurc/images/idc_uparrow.png
+    MOUSE_POINTER_ARROWS_NW_SE      = 60,  // https://learn.microsoft.com/en-us/windows/win32/menurc/images/idc_sizenwse.png
+    MOUSE_POINTER_ARROWS_NE_SW      = 70,  // https://learn.microsoft.com/en-us/windows/win32/menurc/images/idc_sizenesw.png
+    MOUSE_POINTER_ARROWS_HORIZONTAL = 80,  // https://learn.microsoft.com/en-us/windows/win32/menurc/images/idc_sizewe.png
+    MOUSE_POINTER_ARROWS_VERTICAL   = 90,  // https://learn.microsoft.com/en-us/windows/win32/menurc/images/idc_sizens.png
+    MOUSE_POINTER_ARROWS_ALL        = 100, // https://learn.microsoft.com/en-us/windows/win32/menurc/images/idc_sizeall.png
+    MOUSE_POINTER_NO                = 110, // https://learn.microsoft.com/en-us/windows/win32/menurc/images/idc_no.png
+    MOUSE_POINTER_POINT             = 120, // https://learn.microsoft.com/en-us/windows/win32/menurc/images/idc_hand.png
+    
+    MOUSE_POINTER_MAX,
+} Mouse_Pointer_Kind;
+
+typedef void* Custom_Mouse_Pointer;
+
+void ogb_instance
+os_set_mouse_pointer_standard(Mouse_Pointer_Kind kind);
+void ogb_instance
+os_set_mouse_pointer_custom(Custom_Mouse_Pointer p);
+
+// Expects 32-bit rgba
+// Returns 0 on fail
+Custom_Mouse_Pointer ogb_instance
+os_make_custom_mouse_pointer(void *image, int width, int height, int hotspot_x, int hotspot_y);
+
+// Returns 0 on fail
+// Will free everything that's allocated, passing temp allocator should be fine as long as the image is small
+Custom_Mouse_Pointer ogb_instance
+os_make_custom_mouse_pointer_from_file(string path, int hotspot_x, int hotspot_y, Allocator allocator);
+
+
+///////////////////////////////////////////////
 void ogb_instance
 os_init(u64 program_memory_size);
 
 void ogb_instance
 os_update();
-
