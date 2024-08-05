@@ -7,6 +7,7 @@ typedef struct
     struct Gfx_Image *tex;
     Vector2 size;
     float scale;
+    int layer;
 } sprite;
 
 sprite sprites[ET__count];
@@ -15,34 +16,15 @@ struct
 {
     int type;
     float scale;
+    int layer;
     char *filename;
     int x;
     int y;
 } sprite_files[ET__count] =
 {
-    { ET__none,            0.0f,   "", 0, 0 },
-    { ET_player,           1.0f,   "../dat/art/player.png",              10,  15  },
-    { ET_ground,           1.0f,   "../dat/art/ground.png",              16,  16  },
-    { ET_ground2,          1.0f,   "../dat/art/ground2.png",             16,  16  },
-    { ET_ground3,          1.0f,   "../dat/art/ground3.png",             16,  16  },
-    { ET_ground4,          1.0f,   "../dat/art/ground4.png",             16,  16  },
-    { ET_bullet00,         1.0f,   "../dat/art/bullet00.png",             3,   3  },
-    { ET_bullet01,         0.6f,   "../dat/art/bullet01.png",             5,   5  },
-    { ET_bullet02,         1.0f,   "../dat/art/bullet02.png",             4,   4  },
-    { ET_bullet03,         0.4f,   "../dat/art/bullet03.png",             5,   5  },
-    { ET_bullet04,         0.6f,   "../dat/art/bullet04.png",             5,   5  },
-    { ET_bullet05,         0.6f,   "../dat/art/bullet05.png",             6,   6  },
-    { ET_bullet_tank,      1.5f,   "../dat/art/bullet_tank.png",         12,   5  },
-    { ET_mummy,            1.0f,   "../dat/art/mummy.png",               10,  13  },
-    { ET_spider,           1.0f,   "../dat/art/spider.png",              16,  15  },
-    { ET_pickup_a,         0.5f,   "../dat/art/pickup_a.png",            14,  14  },
-    { ET_pickup_b,         0.5f,   "../dat/art/pickup_b.png",            14,  14  },
-    { ET_pickup_c,         0.5f,   "../dat/art/pickup_c.png",            14,  14  },
-    { ET_pickup_m,         0.5f,   "../dat/art/pickup_m.png",            14,  14  },
-    { ET_pickup_s,         0.5f,   "../dat/art/pickup_s.png",            14,  14  },
-    { UI_special_ammo,     1.0f,   "../dat/art/ui_special_ammo.png",     16,  16  },
-    { UI_fire_rate,        1.0f,   "../dat/art/ui_fire_rate.png",        16,  16  },
-    { UI_skull,            0.625f, "../dat/art/ui_skull.png",            16,  16  },
+#define X(name, scale, layer, filename, x, y) { name, scale, layer, filename, x, y },
+    ENTITY_TYPES_X
+#undef X
 };
 
 Gfx_Image* load_sprite_by_id(int id)
@@ -59,7 +41,7 @@ void render_init(void)
     // TODO just load the sprites that will be used
     int i;
     for (i=1; i < sizeof(sprite_files)/sizeof(sprite_files[0]); ++i) {
-        int id = sprite_files[i].type;
+        int id = i;//sprite_files[i].type;
         Gfx_Image *g = load_sprite_by_id(i);
         sprite *s = &sprites[id];
         s->tex = g;
@@ -83,13 +65,16 @@ void render_player(void)
 void render_entities(void)
 {
     int i;
-    for (i=BULLET_ENTITY_MAX;i<max_entity_id;++i)
+    for (i=BULLET_ENTITY_MAX; i<max_entity_id; ++i)
         if (ent[i].valid) {
             int type = ent[i].type;
             Gfx_Image *g = sprites[type].tex;
+            int layer = sprites[type].layer;
             Vector2 sz = sprites[type].size;
             vec pos = ent[i].pos;
+            push_z_layer(layer);
             draw_image(g, v2(pos.x, pos.y), sz, COLOR_WHITE);
+            pop_z_layer();
         }
 }
 
@@ -97,7 +82,7 @@ void render_entities(void)
 void render_bullets(void)
 {
     int i;
-    for (i=TILE_ENTITY_MAX;i<max_bullet_id;++i)
+    for (i=TILE_ENTITY_MAX; i<max_bullet_id; ++i)
         if (ent[i].valid) {
             int type = ent[i].type;
             Gfx_Image *g = sprites[type].tex;

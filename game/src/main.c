@@ -6,6 +6,7 @@
 #include "menu.c"
 
 #if JUMBO_BUILD
+#include "monster.c"
 #include "world.c"
 #include "entity.c"
 #endif
@@ -17,17 +18,20 @@ static vec camera_pos;
 
 static int kill_count;
 
-config cfg =
-{
-    2.5f,
-    100.0f,
-    (vec){180, 180},
-    3.0f,
-    5,
-    25.0f,
-    ET_bullet05,
-    5
+config cfg = {
+    .zoom = 2.5f,
+    .player_speed = 100.0f,
+    .player_start_pos = (vec){180, 180},
+    .bullet_speed = 3.0f,
+    .bullet = ET_bullet01,
+    .fire_rate = 25.0f,
 };
+
+vec vec2(float x, float y)
+{
+    vec v = {x, y};
+    return v;
+}
 
 int get_random_int(void) {
     return rand();
@@ -113,11 +117,10 @@ void fire_bullet(void)
 {
     float mouse_x = input_frame.mouse_x;
     float mouse_y = input_frame.mouse_y;
-    vec vpos = screen_to_world(mouse_x, mouse_y);
-    Vector2 pos = vec_to_v2(vpos);
+    vec pos = screen_to_world(mouse_x, mouse_y);
 
-    float offset_x = sprites[ET_player].size.x /2;
-    float offset_y = sprites[ET_player].size.y /2;
+    float offset_x = sprites[ET_player].size.x/2;
+    float offset_y = sprites[ET_player].size.y/2;
 
     vec dir = {pos.x - (player_pos.x + offset_x), pos.y - (player_pos.y + offset_y)};
     float length = sqrt(dir.x * dir.x + dir.y * dir.y);
@@ -160,7 +163,7 @@ void increase_fire_rate(int amount)
 void process_game_input(vec *axis)
 {
     if (is_key_just_pressed(KEY_ESCAPE))
-        toggle_menu();
+        window.should_close = true;//toggle_menu();
     if (is_key_down('A')) axis->x -= 1.0f;
     if (is_key_down('D')) axis->x += 1.0f;
     if (is_key_down('S')) axis->y -= 1.0f;
@@ -255,9 +258,11 @@ float distance(vec a, vec b)
 void update_bullets(void)
 {
     int i, j;
-    for (i=1; i<max_entity_id; ++i) { // bullets
+    for (i=TILE_ENTITY_MAX; i<max_bullet_id; ++i) { // bullets
         if (ent[i].valid) {
-            if(ent[i].type >= ET__bullets_start && ent[i].type <= ET__bullets_end)
+            //if(ent[i].type >= ET__bullets_start && ent[i].type <= ET__bullets_end)
+            //assert(ent[i].type >= ET__bullets_start && ent[i].type <= ET__bullets_end); // @Remove
+            
             {
                 float d = distance(ent[i].pos, ent[player_id].pos);
                 if(d > 300.0f) {
@@ -270,8 +275,12 @@ void update_bullets(void)
                 ent[i].pos.x += ent[i].velocity.x * dt * 100; // TODO @Hardcoded value
                 ent[i].pos.y += ent[i].velocity.y * dt * 100;
 
-                for (j=1; j<=MAX_ENTITIES; ++j) // mummy
-                    if (ent[j].valid && (ent[j].type == ET_mummy || ent[j].type == ET_spider))
+                for (j=BULLET_ENTITY_MAX; j<=max_entity_id; ++j) // mummy
+                    if (ent[j].valid && (ent[j].type == ET_mummy  ||
+                                         ent[j].type == ET_spider ||
+                                         ent[j].type == ET_alien  ||
+                                         ent[j].type == ET_robot))
+//                    if(ent[j].valid && (ent[j].type >= ET__monsters_start || ent[j].type <= ET__monsters_end))
                         if (check_collision(i, j)) {
                             if(ent[i].type == ET_bullet_tank) {
                                 ent[j].hp -= 5;
@@ -294,32 +303,35 @@ void update_entities(void)
     int i, j;
     for (i=BULLET_ENTITY_MAX; i<=max_entity_id; ++i)
         if(ent[i].valid) {
-            if(ent[i].type >= ET__monsters_start && ent[i].type <= ET__monsters_end) {
+            // monsters
+            if(ent[i].type >= ET__monsters_start && ent[i].type <= ET__monsters_end) { 
                 if(ent[i].hp <= 0) {
                     ent[i].valid = 0;
                     kill_count++;
                     int rand = get_random_int_range(0, 100);
-                    if(rand < 15)  {
+                    if(rand < 5)  {
                         create_entity(ET_pickup_a, ent[i].pos);
-                    } else if(rand >= 15 && rand < 30) {
+                    } else if(rand >= 5 && rand < 10) {
                         create_entity(ET_pickup_s, ent[i].pos);
                     }
 
+                    //int type =  get_random_int() % 2 == 0 ? ET_mummy : ET_spider ;
                     int type = get_random_int_range(ET__monsters_start, ET__monsters_end);
-                    cteate_monster(type, player_pos, 400, cfg.mummy_hp);
-                    cteate_monster(type, player_pos, 400, cfg.mummy_hp);
+                    create_monster(type, player_pos, 400);
+                    create_monster(type, player_pos, 400);
                 }
 
                 if(ent[i].valid)
                 {
                     vec v = ent[i].pos;
-                    move_towards(&v, player_pos, dt, cfg.mummy_speed);
+                    move_towards(&v, player_pos, dt, ent[i].speed);
 
                     ent[i].pos.x = v.x;
                     ent[i].pos.y = v.y;
                 }
             }
 
+            // pickups
             if(ent[i].type == ET_pickup_a) {
                 if(check_collision(i, player_id))
                 {

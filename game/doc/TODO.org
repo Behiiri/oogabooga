@@ -1,0 +1,17 @@
+#+TITLE: Quests and Bounties
+#+STARTUP: indent
+#+TODO: TODO(t) INPROGRESS(p) INSPECT(i) | DONE(d) FIXED(f) VERIFY(v) CANCELLED(c) DEFERRED(w) INVALID(n)
+
+
+* Quests
+** TODO add health to player character
+** TODO add xp
+** DONE add kill count
+** TODO add weapon pickups
+** TODO add skills
+** TODO add win and lose conditions
+** TODO increase moster HP and show damage numbers
+
+* Bounties
+** INVALID after using special bullet, the range change gets applied to normal bullets too.
+

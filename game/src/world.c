@@ -6,15 +6,17 @@ static double world_timer = 0;
 entity_id player_id;
 
 
-void cteate_monster(int type, vec origin, int radius, int hp)
+void create_monster(int type, vec origin, int radius)
 {
     int x = get_random_int_range(-radius, radius) + origin.x;
     int y = get_random_int_range(-radius, radius) + origin.y;
 
     vec pos = {x, y};
     
+    monster mi = get_monster_info(type);
     entity_id id = create_entity(type, pos);
-    ent[id].hp = hp;
+    ent[id].hp = mi.hp;
+    ent[id].speed = mi.speed;
 }
 
 void world_init(void)
@@ -40,8 +42,10 @@ void world_init(void)
     // monsters
     for (i = 0; i<20; ++i)
     {
-        int type =  get_random_int() % 2 == 0 ? ET_mummy : ET_spider ;
-        cteate_monster(type, cfg.player_start_pos, 250, cfg.mummy_hp);
+        int type = get_random_int_range(ET__monsters_start, ET__monsters_end);
+        //int type =  get_random_int() % 2 == 0 ? ET_mummy : ET_spider ;
+        //int type = 100;
+        create_monster(type, cfg.player_start_pos, 250);
     }
     
 }

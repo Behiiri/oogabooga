@@ -14,9 +14,9 @@ set COMPILE_FILES= ../build.c
 set LINK_FILES= build.o 
 
 IF "%USE_JUMBO_BUILD%"=="0" (
-    set COMPILE_FILES=%COMPILE_FILES% ../src/entity.c ../src/world.c
+    set COMPILE_FILES=%COMPILE_FILES% ../src/entity.c ../src/world.c ../src/monster.c
 REM ../src/render.c ../src/menu.c
-    set LINK_FILES=%LINK_FILES% entity.o world.o
+    set LINK_FILES=%LINK_FILES% entity.o world.o monster.o
 REM render.o  menu.o
 )
 

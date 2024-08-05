@@ -10,8 +10,8 @@
 
 entity ent[MAX_ENTITIES];
 static entity_id max_tile_id = 0;
-static entity_id max_bullet_id = TILE_ENTITY_MAX - 1;
-static entity_id max_entity_id = BULLET_ENTITY_MAX - 1;
+static entity_id max_bullet_id = TILE_ENTITY_MAX;
+static entity_id max_entity_id = BULLET_ENTITY_MAX;
 
 entity_id allocate_tile(void)
 {
