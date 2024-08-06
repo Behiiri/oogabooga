@@ -156,7 +156,7 @@ void draw_mouse_coordinates(void)
 
     vec vpos = screen_to_world(mouse_x, mouse_y);
     Vector2 pos = vec_to_v2(vpos);
-    draw_text(font, sprint(get_heap_allocator(), STR("%.2f %.2f"), pos.x, pos.y), font_height, pos, v2(0.1, 0.1), COLOR_WHITE);
+    draw_text(font, tprint(STR("%.2f %.2f"), pos.x, pos.y), font_height, pos, v2(0.1, 0.1), COLOR_WHITE);
 }
 
 void draw_text_on_screen(int x, int y, float scale,  string str)
@@ -183,16 +183,16 @@ void draw_info(void)
         temp_dt = dt;
     }
     
-    draw_text_on_screen(0, (p+fh*s)*o++, s, sprint(get_heap_allocator(), STR("fps:  %.2f  dt: %f"), temp_fps, temp_dt));
-    //draw_text_on_screen(0, (p+fh*s)*o++, s, sprint(get_heap_allocator(), STR("max_tile_id:  %d"), max_tile_id));
-    //draw_text_on_screen(0, (p+fh*s)*o++, s, sprint(get_heap_allocator(), STR("max_bullet_id:  %d"), max_bullet_id));
-    //draw_text_on_screen(0, (p+fh*s)*o++, s, sprint(get_heap_allocator(), STR("max_entity_id:  %d"), max_entity_id));
-    draw_text_on_screen(0, (p+fh*s)*o++, s, sprint(get_heap_allocator(), STR("time:  %f"), world_timer));
-    draw_text_on_screen(0, (p+fh*s)*o++, s, sprint(get_heap_allocator(), STR("fire_rate:  %f"), 1.0f/bullet_fire_cd));
+    draw_text_on_screen(0, (p+fh*s)*o++, s, tprint(STR("fps:  %.2f  dt: %f"), temp_fps, temp_dt));
+    //draw_text_on_screen(0, (p+fh*s)*o++, s, tprint(STR("max_tile_id:  %d"), max_tile_id));
+    //draw_text_on_screen(0, (p+fh*s)*o++, s, tprint(STR("max_bullet_id:  %d"), max_bullet_id));
+    //draw_text_on_screen(0, (p+fh*s)*o++, s, tprint(STR("max_entity_id:  %d"), max_entity_id));
+    draw_text_on_screen(0, (p+fh*s)*o++, s, tprint(STR("time:  %f"), world_timer));
+    draw_text_on_screen(0, (p+fh*s)*o++, s, tprint(STR("fire_rate:  %f"), 1.0f/bullet_fire_cd));
 
-    draw_text_on_screen(0, (p+fh*s)*o++, s, sprint(get_heap_allocator(), STR("tile count:  %d"), max_tile_id - 1));
-    draw_text_on_screen(0, (p+fh*s)*o++, s, sprint(get_heap_allocator(), STR("bullet count:  %d"), max_bullet_id - TILE_ENTITY_MAX));
-    draw_text_on_screen(0, (p+fh*s)*o++, s, sprint(get_heap_allocator(), STR("entity count:  %d"), max_entity_id - BULLET_ENTITY_MAX));    
+    draw_text_on_screen(0, (p+fh*s)*o++, s, tprint(STR("tile count:  %d"), max_tile_id - 1));
+    draw_text_on_screen(0, (p+fh*s)*o++, s, tprint(STR("bullet count:  %d"), max_bullet_id - TILE_ENTITY_MAX));
+    draw_text_on_screen(0, (p+fh*s)*o++, s, tprint(STR("entity count:  %d"), max_entity_id - BULLET_ENTITY_MAX));    
 }
 
 extern Gfx_Font* font;
@@ -218,7 +218,7 @@ void render_ui(void)
         pos.y -= p*o++;
         draw_image(g, pos, sz, COLOR_WHITE);
     
-        string str = sprint(get_heap_allocator(), STR("%d"), special_ammo);
+        string str = tprint(STR("%d"), special_ammo);
         Gfx_Text_Metrics str_metrics = measure_text(font, str, fh, v2(scale, scale));
 
         pos.y = pos.y -sz.y/2;
@@ -234,7 +234,7 @@ void render_ui(void)
         pos.y -= p*o++;
         draw_image(g, pos, sz, COLOR_WHITE);
 
-        string str = sprint(get_heap_allocator(), STR("%d"), cfg.fire_rate);
+        string str = tprint(STR("%d"), cfg.fire_rate);
         Gfx_Text_Metrics str_metrics = measure_text(font, str, fh, v2(scale, scale));
 
         pos.y -= sz.y/2;
@@ -244,7 +244,7 @@ void render_ui(void)
 
     { // World Time
         float scale = 0.25;
-        string str = sprint(get_heap_allocator(), STR("time:  %4.2f"), world_timer);
+        string str = tprint(STR("time:  %4.2f"), world_timer);
         Gfx_Text_Metrics str_metrics = measure_text(font, STR("time:  8888.88"), fh, v2(scale, scale));
         int y = window.height/20 + str_metrics.functional_size.y;
         int x = window.width/2 - str_metrics.functional_size.x;
@@ -259,14 +259,13 @@ void render_ui(void)
         Vector2 pos = v2(x, y);
         draw_image(g, pos, sz, COLOR_WHITE);
 
-        string str = sprint(get_heap_allocator(), STR("%d"), kill_count);
+        string str = tprint(STR("%d"), kill_count);
         // Gfx_Text_Metrics str_metrics = measure_text(font, str, fh, v2(scale, scale));
         
         pos.y = pos.y + sz.y/3;
         pos.x = pos.x + sz.x + 3;
         draw_text(font, str, fh, pos, v2(scale, scale), COLOR_WHITE);
     }
-
 }
 
 static Bool should_draw_info = 0;

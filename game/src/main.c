@@ -20,11 +20,11 @@ static int kill_count;
 
 config cfg = {
     .zoom = 2.5f,
-    .player_speed = 100.0f,
+    .player_speed = 50.0f,
     .player_start_pos = (vec){180, 180},
-    .bullet_speed = 3.0f,
+    .bullet_speed = 1.0f,
     .bullet = ET_bullet01,
-    .fire_rate = 25.0f,
+    .fire_rate = 1.0f,
 };
 
 vec vec2(float x, float y)
@@ -104,6 +104,39 @@ vec screen_to_world(float x, float y)
 
     return (vec) {world_pos.x, world_pos.y};
 }
+
+vec get_random_pos_on_screen_sides(vec origin)
+{
+    int sw = 1280/3;
+    int sh = 720/3;
+    int side = rand() % 4;
+    int x, y;
+    int dx = rand() % sw;
+    int dy = rand() % sh;
+    
+    switch(side) {
+        case 0: // left
+            x = origin.x - sw/2 - dx/(2*cfg.zoom);
+            y = origin.y - sh/2 + dy;
+            break;
+        case 1: // up
+            x = origin.x - sw/2 + dx;
+            y = origin.y + sh/2 + dy*(2*cfg.zoom);
+            break;
+        case 2: // right
+            x = origin.x + sw/2 + dx*(2*cfg.zoom);
+            y = origin.y - sh/2 + dy;
+            break;
+        case 3: // down
+            x = origin.x - sw/2 + dx;
+            y = origin.y - sh/2 - dy*(2*cfg.zoom);
+            break;
+    }
+
+    vec v = {x, y};
+    return v;
+}
+
 
 void next_weapon(void)
 {
@@ -315,10 +348,8 @@ void update_entities(void)
                         create_entity(ET_pickup_s, ent[i].pos);
                     }
 
-                    //int type =  get_random_int() % 2 == 0 ? ET_mummy : ET_spider ;
                     int type = get_random_int_range(ET__monsters_start, ET__monsters_end);
-                    create_monster(type, player_pos, 400);
-                    create_monster(type, player_pos, 400);
+                    create_monster_in_random_side(type, player_pos);
                 }
 
                 if(ent[i].valid)
@@ -328,6 +359,12 @@ void update_entities(void)
 
                     ent[i].pos.x = v.x;
                     ent[i].pos.y = v.y;
+
+                    if(distance(ent[player_id].pos, ent[i].pos) > 250.0f)
+                    {
+                        vec pos = get_random_pos_on_screen_sides(ent[player_id].pos);
+                        ent[i].pos = pos;
+                    }
                 }
             }
 

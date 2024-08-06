@@ -4,10 +4,10 @@ monster monster_info[MONSTER_COUNT + 1] =
 {
 //     type       hp     power speed
 //  { ET__none,   999,   99,   99 },
-    { ET_mummy,     1,   10,   10 },
-    { ET_spider,    1,   10,   15 },
-    { ET_alien,     1,   10,   14 },
-    { ET_robot,     1,   10,   14 }
+    { ET_mummy,     9,   10,   10 },
+    { ET_spider,    3,   10,   20 },
+    { ET_alien,     5,   10,   15 },
+    { ET_robot,    15,   10,    5 }
 };
 
 Bool is_monster(int entity_type)

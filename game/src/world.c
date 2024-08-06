@@ -1,22 +1,42 @@
 #include "game_funcs.h"
 #include <string.h> // memset
+#include <stdlib.h> // rand
+#include <math.h> // rand
+
+#define M_PI 3.14159
 
 static double world_timer = 0;
 
 entity_id player_id;
 
+// double distance(float x1, float y1, float x2, float y2) {
+//     return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+// }
 
-void create_monster(int type, vec origin, int radius)
+void create_monster(int type, vec pos)
 {
-    int x = get_random_int_range(-radius, radius) + origin.x;
-    int y = get_random_int_range(-radius, radius) + origin.y;
-
-    vec pos = {x, y};
-    
     monster mi = get_monster_info(type);
     entity_id id = create_entity(type, pos);
     ent[id].hp = mi.hp;
     ent[id].speed = mi.speed;
+}
+
+void create_monster_in_random_side(int type, vec origin)
+{
+    vec pos = get_random_pos_on_screen_sides(origin);
+    create_monster(type, pos);
+}
+
+void create_monster_in_distance(int type, vec origin, int dist_min, int dist_max)
+{
+    double angle = ((double)rand() / RAND_MAX) * 2 * M_PI;
+    double radius = dist_min + ((double)rand() / RAND_MAX) * (dist_max - dist_min);
+
+    double x = origin.x + radius * cos(angle);
+    double y = origin.y + radius * sin(angle);
+    vec pos = {x, y};
+    
+    create_monster(type, pos);
 }
 
 void world_init(void)
@@ -43,9 +63,8 @@ void world_init(void)
     for (i = 0; i<20; ++i)
     {
         int type = get_random_int_range(ET__monsters_start, ET__monsters_end);
-        //int type =  get_random_int() % 2 == 0 ? ET_mummy : ET_spider ;
-        //int type = 100;
-        create_monster(type, cfg.player_start_pos, 250);
+        ///create_monster(type, cfg.player_start_pos, 250);
+        create_monster_in_random_side(type, cfg.player_start_pos);
     }
     
 }
