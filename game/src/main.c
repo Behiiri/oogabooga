@@ -6,6 +6,8 @@
 #include "menu.c"
 
 #if JUMBO_BUILD
+#include "weapon.c"
+#include "character.c"
 #include "monster.c"
 #include "world.c"
 #include "entity.c"
@@ -15,16 +17,15 @@ static int program_mode = MODE_game;
 static float  dt;
 static vec player_pos;
 static vec camera_pos;
+static character player_char;
+static weapon cur_weapon;
 
 static int kill_count;
 
 config cfg = {
     .zoom = 2.5f,
     .player_speed = 50.0f,
-    .player_start_pos = (vec){180, 180},
-    .bullet_speed = 1.0f,
-    .bullet = ET_bullet01,
-    .fire_rate = 1.0f,
+    .player_start_pos = (vec){0, 0},
 };
 
 vec vec2(float x, float y)
@@ -105,31 +106,31 @@ vec screen_to_world(float x, float y)
     return (vec) {world_pos.x, world_pos.y};
 }
 
-vec get_random_pos_on_screen_sides(vec origin)
+vec get_random_pos_on_side(vec origin, int side)
 {
-    int sw = 1280/3;
-    int sh = 720/3;
-    int side = rand() % 4;
+    float fac = 1.2f;
+    int sw = window.width/cfg.zoom  *fac;
+    int sh = window.height/cfg.zoom *fac;
     int x, y;
     int dx = rand() % sw;
     int dy = rand() % sh;
     
     switch(side) {
-        case 0: // left
-            x = origin.x - sw/2 - dx/(2*cfg.zoom);
+        case LEFT: // 0
+        x = origin.x - sw/2 - dx/(fac);
+        y = origin.y - sh/2 + dy;
+        break;
+        case UP: // 1
+            x = origin.x + dx - sw/2;
+            y = origin.y + sh/2 + dy/(fac);
+            break;
+        case RIGHT: // 2
+            x = origin.x + sw/2 + dx/(fac);
             y = origin.y - sh/2 + dy;
             break;
-        case 1: // up
-            x = origin.x - sw/2 + dx;
-            y = origin.y + sh/2 + dy*(2*cfg.zoom);
-            break;
-        case 2: // right
-            x = origin.x + sw/2 + dx*(2*cfg.zoom);
-            y = origin.y - sh/2 + dy;
-            break;
-        case 3: // down
-            x = origin.x - sw/2 + dx;
-            y = origin.y - sh/2 - dy*(2*cfg.zoom);
+        case DOWN: // 3
+            x = origin.x + dx - sw/2;
+            y = origin.y - sh/2 - dy/(fac);
             break;
     }
 
@@ -137,12 +138,41 @@ vec get_random_pos_on_screen_sides(vec origin)
     return v;
 }
 
+vec get_random_spawn_pos(vec origin)
+{
+    int side = rand() % 4;
+    return get_random_pos_on_side(origin, side);
+}
+
+int get_new_spawn_side(vec origin, vec pos)
+{
+    int VIEW_WIDTH  = window.width/cfg.zoom;
+    int VIEW_HEIGHT = window.height/cfg.zoom;
+    float lb = origin.x - VIEW_WIDTH  / 2;
+    float rb = origin.x + VIEW_WIDTH  / 2;
+    float tb = origin.y + VIEW_HEIGHT / 2;
+    float bb = origin.y - VIEW_HEIGHT / 2;
+
+    if(pos.x > rb) return LEFT;
+    if(pos.y < bb) return UP;
+    if(pos.x < lb) return RIGHT;
+    if(pos.y > tb) return DOWN;
+
+    return -1;
+}
+
+vec reposition_monster(vec player_pos, vec pos)
+{
+    int side = get_new_spawn_side(player_pos, pos);
+    return get_random_pos_on_side(player_pos, side);
+}
 
 void next_weapon(void)
 {
-    cfg.bullet++;
-    if(cfg.bullet > ET__bullets_end - 1) // -1 because of special ammo
-        cfg.bullet = ET__bullets_start;
+    player_char.weapon++;
+    if(player_char.weapon == WT__count)
+        player_char.weapon = 0;
+    cur_weapon = weapon_info[player_char.weapon];
 }
 
 int special_ammo = 0;
@@ -158,9 +188,9 @@ void fire_bullet(void)
     vec dir = {pos.x - (player_pos.x + offset_x), pos.y - (player_pos.y + offset_y)};
     float length = sqrt(dir.x * dir.x + dir.y * dir.y);
     vec unit_dir = {dir.x / length, dir.y / length};
-    vec velocity = {unit_dir.x * cfg.bullet_speed, unit_dir.y * cfg.bullet_speed};
+    vec velocity = {unit_dir.x * cur_weapon.bullet_speed, unit_dir.y * cur_weapon.bullet_speed};
 
-    int id = create_bullet(cfg.bullet, (vec){player_pos.x + offset_x, player_pos.y + offset_y});
+    int id = create_bullet(cur_weapon.bullet_type, (vec){player_pos.x + offset_x, player_pos.y + offset_y});
     ent[id].velocity.x = velocity.x;
     ent[id].velocity.y = velocity.y;
 
@@ -188,9 +218,9 @@ void decrease_fire_cd(float percent)
 
 void increase_fire_rate(int amount)
 {
-    cfg.fire_rate = cfg.fire_rate + amount;
-    if(cfg.fire_rate > 20) cfg.fire_rate = 20;
-    bullet_fire_cd = 1.0f/cfg.fire_rate;
+    cur_weapon.fire_rate = cur_weapon.fire_rate + amount;
+    if(cur_weapon.fire_rate > 20) cur_weapon.fire_rate = 20;
+    bullet_fire_cd = 1.0f/cur_weapon.fire_rate;
 }
 
 void process_game_input(vec *axis)
@@ -222,19 +252,20 @@ void process_game_input(vec *axis)
     }
     if (is_key_down('C')) {
         cfg.zoom -= 0.01f;
-        if(cfg.zoom < 1.25)
-            cfg.zoom = 1.25;
+        if(cfg.zoom < 1.00)
+            cfg.zoom = 1.00;
     }
     if (is_key_just_pressed(MOUSE_BUTTON_RIGHT)) {
 
             if(special_ammo > 0)
             {
+                // TODO instead of changing bullet, fire another weapon
                 special_ammo--;
 
-                int cb = cfg.bullet;
-                cfg.bullet = ET_bullet_tank;
+                int cb = cur_weapon.bullet_type;
+                cur_weapon.bullet_type = ET_bullet_tank;
                 fire_bullet();
-                cfg.bullet = cb;
+                cur_weapon.bullet_type = cb;
             }
     }
     //if (is_key_just_pressed(MOUSE_BUTTON_LEFT)) {
@@ -293,41 +324,53 @@ void update_bullets(void)
     int i, j;
     for (i=TILE_ENTITY_MAX; i<max_bullet_id; ++i) { // bullets
         if (ent[i].valid) {
-            //if(ent[i].type >= ET__bullets_start && ent[i].type <= ET__bullets_end)
-            //assert(ent[i].type >= ET__bullets_start && ent[i].type <= ET__bullets_end); // @Remove
-            
-            {
-                float d = distance(ent[i].pos, ent[player_id].pos);
-                if(d > 300.0f) {
-                    ent[i].valid = 0;
-                    if(ent[i].type != ET_bullet_tank)
-                        if(d > 150.0f)
-                            ent[i].valid = 0;
-                }
-
-                ent[i].pos.x += ent[i].velocity.x * dt * 100; // TODO @Hardcoded value
-                ent[i].pos.y += ent[i].velocity.y * dt * 100;
-
-                for (j=BULLET_ENTITY_MAX; j<=max_entity_id; ++j) // mummy
-                    if (ent[j].valid && (ent[j].type == ET_mummy  ||
-                                         ent[j].type == ET_spider ||
-                                         ent[j].type == ET_alien  ||
-                                         ent[j].type == ET_robot))
-//                    if(ent[j].valid && (ent[j].type >= ET__monsters_start || ent[j].type <= ET__monsters_end))
-                        if (check_collision(i, j)) {
-                            if(ent[i].type == ET_bullet_tank) {
-                                ent[j].hp -= 5;
-                            } else {
-                                ent[j].hp--;
-                                ent[i].valid = 0;
-                            }
-
-                            break;
-                        }
+            float d = distance(ent[i].pos, ent[player_id].pos);
+            if(d > 300.0f) {
+                ent[i].valid = 0;
+                if(ent[i].type != ET_bullet_tank)
+                    if(d > 150.0f)
+                        ent[i].valid = 0;
             }
+
+            ent[i].pos.x += ent[i].velocity.x * dt * cur_weapon.bullet_speed; // TODO @Hardcoded value
+            ent[i].pos.y += ent[i].velocity.y * dt * cur_weapon.bullet_speed;
+
+            for (j=BULLET_ENTITY_MAX; j<=max_entity_id; ++j)
+                if(ent[j].valid && (ent[j].type >= ET__monsters_start || ent[j].type <= ET__monsters_end))
+                    if (check_collision(i, j)) {
+                        if(ent[i].type == ET_bullet_tank) {
+                            ent[j].hp -= 5;
+                        } else {
+                            ent[j].hp--;
+                            ent[i].valid = 0;
+                        }
+
+                        break;
+                    }
+            
         }
     }
 }
+
+Bool is_out_of_screen(vec origin, vec pos, float factor)
+{
+    // factor 1 == size of the screen, and 0.5f half of it, etc
+    float mul = 1/cfg.zoom;
+    int VIEW_WIDTH  = window.width *mul;
+    int VIEW_HEIGHT = window.height*mul;
+    float lb = origin.x - VIEW_WIDTH/2  * factor;
+    float rb = origin.x + VIEW_WIDTH/2  * factor;
+    float tb = origin.y - VIEW_HEIGHT/2 * factor;
+    float bb = origin.y + VIEW_HEIGHT/2 * factor;
+    
+    return (pos.x < lb || pos.x > rb || pos.y < tb || pos.y > bb);
+}
+
+Bool is_out_of_chase_range(vec origin, vec pos, float range)
+{
+    return (distance(origin, pos) > range);
+}
+
 
 void update_entities(void)
 {
@@ -360,9 +403,10 @@ void update_entities(void)
                     ent[i].pos.x = v.x;
                     ent[i].pos.y = v.y;
 
-                    if(distance(ent[player_id].pos, ent[i].pos) > 250.0f)
+                    if(is_out_of_screen(ent[player_id].pos, ent[i].pos, 1.5f))
+                    //if(is_out_of_chase_range(ent[player_id].pos, ent[i].pos, 275)) // @hardcoded
                     {
-                        vec pos = get_random_pos_on_screen_sides(ent[player_id].pos);
+                        vec pos = reposition_monster(ent[player_id].pos, ent[i].pos);
                         ent[i].pos = pos;
                     }
                 }
@@ -408,7 +452,6 @@ void gameloop(void)
         input_axis.y *= cfg.player_speed * dt;
         player_pos.x += input_axis.x;
         player_pos.y += input_axis.y;
-        //player_pos = v2_add(vec_to_v2(player_pos), v2_mulf(v2_input_axis, cfg.player_speed * dt));
 
         ent[0].pos.x = player_pos.x;
         ent[0].pos.y = player_pos.y;
@@ -428,7 +471,15 @@ void game_init(void)
 {
     srand(time(0));
 
-    bullet_fire_cd = 1.0f / cfg.fire_rate;
+    player_char = (character){
+        .weapon = WT_SpreadGun,
+        .hp              = 100,
+        .speed           = 50,
+    };
+
+    cur_weapon = weapon_info[player_char.weapon];
+
+    bullet_fire_cd = 1.0f / cur_weapon.fire_rate;
 
     font = load_font_from_disk(STR("../dat/fnt/karmina.otf"), get_heap_allocator());
     assert(font, "Failed loading karmina.otf, %d", GetLastError());

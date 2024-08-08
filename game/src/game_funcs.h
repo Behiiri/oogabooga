@@ -8,7 +8,7 @@ extern vec vec2(float x, float y);
 extern int get_random_int(void);
 extern int get_random_int_range(int min, int max);
 extern vec screen_to_world(float x, float y);
-extern vec get_random_pos_on_screen_sides(vec origin);
+extern vec get_random_spawn_pos(vec origin);
 
 // monster
 extern monster get_monster_info(int type);
@@ -19,7 +19,6 @@ extern int  create_entity(int type, vec pos);
 extern void ent_to_world(float pos[2], entity_id id);
 extern void process_tick_raw(float dt);
 extern int  world_to_tile_pos(float world_pos);
-//extern void create_monster(int type, vec origin, int radius);
 extern void create_monster(int type, vec pos);
 extern void create_monster_in_random_side(int type, vec origin);
 extern int  create_bullet(int type, vec pos);
@@ -31,6 +30,7 @@ extern entity_id allocate_entity(void);
 extern entity_id allocate_player(void);
 extern entity_id allocate_tile(void);
 extern entity_id allocate_bullet(void);
+extern entity_id allocate_monster(void);
 
 // render.c
 extern void render_game(void);

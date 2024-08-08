@@ -37,6 +37,14 @@ typedef int entity_id;
 
 #define TILE_SIZE 16
 
+enum
+{
+    LEFT,
+    UP,
+    RIGHT,
+    DOWN
+};
+
 typedef struct
 {
     vec pos;
@@ -141,6 +149,8 @@ enum
     ET__monsters_end   = ET_robot
 };
 
+
+#define BULLETS_COUNT (ET__bullets_end - ET__bullets_start + 1)
 #define MONSTER_COUNT (ET__monsters_end - ET__monsters_start + 1)
 
 typedef struct
@@ -155,7 +165,7 @@ enum
 {
     BULLET_normal,
     BULLET_tank,
-    BULLET_smar
+    BULLET_smart
 };
 
 enum // fire mode
@@ -166,40 +176,53 @@ enum // fire mode
     FM_four_bullets,
     FM_five_bullets,
     FM_cycle,
-    FM_burst
+    FM_burst,
+    FM_Spread
+};
+
+enum // weapon types
+{
+    WT_pistol,
+    WT_secondary,
+    WT_SpreadGun,
+    WT__count
 };
 
 typedef struct
 {
-    int bullet;
+    int type;
+    int bullet_type;
+    int bullets_per_shot;
+    float bullet_speed; // ??
     int fire_mode;
-    int ammo_count;
-    float bullet_speed;
     int fire_rate;
 } weapon;
+
+extern weapon cur_weapon;
+extern weapon weapon_info[];
 
 typedef struct
 {
     float zoom;
     float player_speed;
     vec   player_start_pos;
-    float bullet_speed;
-    int   bullet;
-    int   fire_rate;
 } config;
 
 extern config cfg;
 
-#define TILE_ENTITY_MAX   4096
-#define BULLET_ENTITY_MAX 4352
-#define MAX_ENTITIES      65536
+#define TILE_ENTITY_MAX    4096
+#define BULLET_ENTITY_MAX  4352
+#define MONSTER_ENTITY_MAX 8192
+#define MAX_ENTITIES       65536
 
 extern entity ent[MAX_ENTITIES];
 
 extern entity_id max_entity_id;
 extern entity_id max_tile_id;
 extern entity_id max_bullet_id;
+extern entity_id max_monster_id;
 
+ 
 extern int program_mode;
 extern double world_timer;
 
@@ -208,4 +231,22 @@ extern double bullet_fire_cd;
 
 extern entity_id player_id;
 extern int kill_count;
+
+typedef struct
+{
+    int   weapon;
+    int   hp;
+    float speed;
+    // char* name;
+    // Gfx_Image* tex;
+    // Gfx_Image* icon;
+} character;
+
+enum
+{
+    CH_001,
+    CH_002,
+};
+    
 #endif
+

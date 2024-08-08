@@ -1,29 +1,42 @@
 #include "game_funcs.h"
-#include <string.h> // memset
 #include <stdlib.h> // rand
-#include <math.h> // rand
+#include <math.h> // cos sin
 
-#define M_PI 3.14159
+#ifndef M_PI
+#define M_PI  3.14159265358979323846264f
+#endif
 
 static double world_timer = 0;
 
 entity_id player_id;
 
-// double distance(float x1, float y1, float x2, float y2) {
-//     return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
-// }
+void *game_memset(void *data, int c, size_t n)
+{    
+    uint8 *d  = data;
+    uint8 val = (uint8)c;
+    
+    int i;
+    for(i=0; i<n; ++i)
+        d[i] = val;
+    return data;
+}
 
 void create_monster(int type, vec pos)
 {
+    entity_id id = allocate_monster();
+    game_memset(&ent[id], 0, sizeof(ent[id]));
+
     monster mi = get_monster_info(type);
-    entity_id id = create_entity(type, pos);
     ent[id].hp = mi.hp;
     ent[id].speed = mi.speed;
+    ent[id].pos   = pos;
+    ent[id].type  = type;
+    ent[id].valid = 1;
 }
 
 void create_monster_in_random_side(int type, vec origin)
 {
-    vec pos = get_random_pos_on_screen_sides(origin);
+    vec pos = get_random_spawn_pos(origin);
     create_monster(type, pos);
 }
 
@@ -60,10 +73,9 @@ void world_init(void)
         }
 
     // monsters
-    for (i = 0; i<20; ++i)
+    for (i = 0; i<55; ++i)
     {
         int type = get_random_int_range(ET__monsters_start, ET__monsters_end);
-        ///create_monster(type, cfg.player_start_pos, 250);
         create_monster_in_random_side(type, cfg.player_start_pos);
     }
     
@@ -71,8 +83,8 @@ void world_init(void)
 
 int create_entity(int type, vec pos)
 {
-    int id = allocate_entity();
-    memset(&ent[id], 0, sizeof(ent[id]));
+    entity_id id = allocate_entity();
+    game_memset(&ent[id], 0, sizeof(ent[id]));
     ent[id].pos = pos;
     ent[id].valid = 1;
     ent[id].type = type;
@@ -82,8 +94,8 @@ int create_entity(int type, vec pos)
 
 int create_tile(int type, vec pos)
 {
-    int id = allocate_tile();
-    memset(&ent[id], 0, sizeof(ent[id]));
+    entity_id id = allocate_tile();
+    game_memset(&ent[id], 0, sizeof(ent[id]));
     ent[id].pos = pos;
     ent[id].valid = 1;
     ent[id].type = type;
@@ -95,8 +107,8 @@ int create_tile(int type, vec pos)
 int create_bullet(int type, vec pos)
 {
     //assert(type >= ET__bullets_start && type <= ET__bullets_end);
-    int id = allocate_bullet();
-    memset(&ent[id], 0, sizeof(ent[id]));
+    entity_id id = allocate_bullet();
+    game_memset(&ent[id], 0, sizeof(ent[id]));
     ent[id].pos = pos;
     ent[id].valid = 1;
     ent[id].type = type;

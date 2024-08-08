@@ -192,7 +192,8 @@ void draw_info(void)
 
     draw_text_on_screen(0, (p+fh*s)*o++, s, tprint(STR("tile count:  %d"), max_tile_id - 1));
     draw_text_on_screen(0, (p+fh*s)*o++, s, tprint(STR("bullet count:  %d"), max_bullet_id - TILE_ENTITY_MAX));
-    draw_text_on_screen(0, (p+fh*s)*o++, s, tprint(STR("entity count:  %d"), max_entity_id - BULLET_ENTITY_MAX));    
+    draw_text_on_screen(0, (p+fh*s)*o++, s, tprint(STR("entity count:  %d"), max_entity_id - BULLET_ENTITY_MAX));
+    //draw_text_on_screen(0, (p+fh*s)*o++, s, tprint(STR("monster pos:  %f , %f"), ent[BULLET_ENTITY_MAX].pos.x, ent[BULLET_ENTITY_MAX].pos.y));
 }
 
 extern Gfx_Font* font;
@@ -234,7 +235,7 @@ void render_ui(void)
         pos.y -= p*o++;
         draw_image(g, pos, sz, COLOR_WHITE);
 
-        string str = tprint(STR("%d"), cfg.fire_rate);
+        string str = tprint(STR("%d"), cur_weapon.fire_rate);
         Gfx_Text_Metrics str_metrics = measure_text(font, str, fh, v2(scale, scale));
 
         pos.y -= sz.y/2;
