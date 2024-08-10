@@ -8,7 +8,7 @@ if exist bin (
 mkdir bin
 pushd bin
 
-SET USE_JUMBO_BUILD=0
+SET USE_JUMBO_BUILD=1
 
 set COMPILE_FILES= ../build.c
 set LINK_FILES= build.o 

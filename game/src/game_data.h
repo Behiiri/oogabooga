@@ -28,7 +28,7 @@ typedef unsigned long long uint64;
 typedef struct { float x,y    ; } vec;
 typedef struct { float x,y,z  ; } vec3;
 typedef struct { float x,y,z,w; } vec4;
-typedef struct { vec m[3]     ; } mat3;
+typedef struct { vec3 m[3]    ; } mat3;
 typedef struct { vec4 m[4]    ; } mat4;
 typedef struct { float x,y,z,w; } quat;
 typedef struct { int x,y      ; } vec2i;
@@ -54,55 +54,16 @@ typedef struct
     int type;
     uint32 valid;
     float speed;
-} entity; // 40
+    float radius;
+    int32 rot;
+    
+} entity;
 
 enum
 {
     MODE_game,
     MODE_menu
 };
-
-#if 0
-// entity types
-enum
-{
-    ET__none,
-    ET_player,
-    ET_ground,
-    ET_ground2,
-    ET_ground3,
-    ET_ground4,
-
-    ET__bullets_start,
-    ET_bullet00 = ET__bullets_start,
-    ET_bullet01,
-    ET_bullet02,
-    ET_bullet03,
-    ET_bullet04,
-    ET_bullet05,
-    ET_bullet_tank,
-    ET__bullets_end = ET_bullet_tank,
-
-    ET__monsters_start,
-    ET_mummy = ET__monsters_start,
-    ET_spider,
-    ET_alien,
-    ET_robot,
-    ET__monsters_end = ET_robot,
-    
-    ET_pickup_a,
-    ET_pickup_b,
-    ET_pickup_c,
-    ET_pickup_m,
-    ET_pickup_s,
-
-    UI_special_ammo,
-    UI_fire_rate,
-    UI_skull,
-    
-    ET__count
-};
-#endif
 
 //    type               size    layer path                              x    y
 #define ENTITY_TYPES_X                                                  \
@@ -150,7 +111,7 @@ enum
 };
 
 
-#define BULLETS_COUNT (ET__bullets_end - ET__bullets_start + 1)
+#define BULLETS_COUNT (ET__bullets_end  - ET__bullets_start  + 1)
 #define MONSTER_COUNT (ET__monsters_end - ET__monsters_start + 1)
 
 typedef struct
@@ -215,6 +176,11 @@ extern config cfg;
 #define MONSTER_ENTITY_MAX 8192
 #define MAX_ENTITIES       65536
 
+#define TILE_ENTITY_MIN    1
+#define BULLET_ENTITY_MIN  TILE_ENTITY_MAX
+#define MONSTER_ENTITY_MIN BULLET_ENTITY_MAX
+
+
 extern entity ent[MAX_ENTITIES];
 
 extern entity_id max_entity_id;
@@ -222,7 +188,7 @@ extern entity_id max_tile_id;
 extern entity_id max_bullet_id;
 extern entity_id max_monster_id;
 
- 
+
 extern int program_mode;
 extern double world_timer;
 

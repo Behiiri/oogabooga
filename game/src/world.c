@@ -10,7 +10,7 @@ static double world_timer = 0;
 
 entity_id player_id;
 
-void *game_memset(void *data, int c, size_t n)
+static void *game_memset(void *data, int c, size_t n)
 {    
     uint8 *d  = data;
     uint8 val = (uint8)c;
@@ -29,6 +29,7 @@ void create_monster(int type, vec pos)
     monster mi = get_monster_info(type);
     ent[id].hp = mi.hp;
     ent[id].speed = mi.speed;
+    ent[id].radius = 30;
     ent[id].pos   = pos;
     ent[id].type  = type;
     ent[id].valid = 1;
@@ -73,8 +74,7 @@ void world_init(void)
         }
 
     // monsters
-    for (i = 0; i<55; ++i)
-    {
+    for (i = 0; i<25; ++i) {
         int type = get_random_int_range(ET__monsters_start, ET__monsters_end);
         create_monster_in_random_side(type, cfg.player_start_pos);
     }

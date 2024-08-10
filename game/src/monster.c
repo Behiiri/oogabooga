@@ -10,6 +10,11 @@ monster monster_info[MONSTER_COUNT + 1] =
     { ET_robot,    15,   10,    5 }
 };
 
+inline entity_id monster_id(int i)
+{
+    return MONSTER_ENTITY_MIN + i;
+}
+
 Bool is_monster(int entity_type)
 {
     return (entity_type >= ET__monsters_start || entity_type <= ET__monsters_end);

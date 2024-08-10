@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <time.h>
+#include <math.h>
 
 #include "game_funcs.h"
 #include "render.c" // render.c needs to access some engine specific types
@@ -12,6 +13,9 @@
 #include "world.c"
 #include "entity.c"
 #endif
+
+#define SCREEN_X (1280.0f/3*2)
+#define SCREEN_Y (720.0f/3*2)
 
 static int program_mode = MODE_game;
 static float  dt;
@@ -283,9 +287,13 @@ void update_view(void)
     vec target_pos = ent[player_id].pos;
     animate_v2_to_d(&camera_pos, target_pos, dt, 15.0f);
 
+    float scale_x = SCREEN_X/window.width;
+    float scale_y = SCREEN_Y/window.height;
+    float scale = scale_x > scale_y ? scale_x : scale_y;
+    
     draw_frame.view = m4_make_scale(v3(1.0, 1.0, 1.0));
     draw_frame.view = m4_mul(draw_frame.view, m4_make_translation(v3(camera_pos.x, camera_pos.y, 0)));
-    draw_frame.view = m4_mul(draw_frame.view, m4_make_scale(v3(1.0f/cfg.zoom, 1.0f/cfg.zoom, 1.0f)));
+    draw_frame.view = m4_mul(draw_frame.view, m4_make_scale(v3((scale)/cfg.zoom, (scale)/cfg.zoom, 1.0f)));
 }
 
 Bool check_collision(entity_id ent_id_a, entity_id ent_id_b)
@@ -380,12 +388,12 @@ void update_entities(void)
     for (i=BULLET_ENTITY_MAX; i<=max_entity_id; ++i)
         if(ent[i].valid) {
             // monsters
-            if(ent[i].type >= ET__monsters_start && ent[i].type <= ET__monsters_end) { 
+            if(ent[i].type >= ET__monsters_start && ent[i].type <= ET__monsters_end) {
                 if(ent[i].hp <= 0) {
                     ent[i].valid = 0;
                     kill_count++;
                     int rand = get_random_int_range(0, 100);
-                    if(rand < 5)  {
+                    if(rand < 5) {
                         create_entity(ET_pickup_a, ent[i].pos);
                     } else if(rand >= 5 && rand < 10) {
                         create_entity(ET_pickup_s, ent[i].pos);
@@ -402,7 +410,6 @@ void update_entities(void)
 
                     ent[i].pos.x = v.x;
                     ent[i].pos.y = v.y;
-
                     if(is_out_of_screen(ent[player_id].pos, ent[i].pos, 1.5f))
                     //if(is_out_of_chase_range(ent[player_id].pos, ent[i].pos, 275)) // @hardcoded
                     {
@@ -495,8 +502,8 @@ void game_init(void)
 int entry(int argc, char **argv)
 {
     window.title = STR("fatal strike");
-    window.scaled_width = 1280/3*2;
-    window.scaled_height = 720/3*2;
+    window.scaled_width = SCREEN_X;
+    window.scaled_height = SCREEN_Y;
     window.x = 200;
     window.y = 90;
     window.clear_color = hex_to_rgba(0x181818ff);

@@ -12,6 +12,7 @@ extern vec get_random_spawn_pos(vec origin);
 
 // monster
 extern monster get_monster_info(int type);
+extern entity_id monster_id(int i);
 
 // world.c
 extern void world_init(void);

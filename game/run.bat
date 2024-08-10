@@ -1,7 +1,7 @@
 @echo off
 cd /D "%~dp0"
 
-pushd build
+pushd bin
 
 .\game.exe
 popd
