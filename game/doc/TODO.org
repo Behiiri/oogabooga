@@ -14,4 +14,16 @@
 
 * Bounties
 ** INVALID after using special bullet, the range change gets applied to normal bullets too.
-
+I think this has nothing to do with special bullets
+** TODO tank bullets apply damage more than once (each frame that it collides with a monster)
+I can have a list of bullets or monsters that collide and ignore them when checking for collision,
+but this feels so unnecessary and inefficient
+bullets can have a list of monsters
+or monsters can have a list of bullets
+what is the alternative?
+** FIXED pickups collide with bullets
+bullets was checking all entities, now they just check monsters
+** TODO repositioning monster can put monsters on a position that needs repositioning again
+so sometimes the repositioning can happen more then 10 times for a monster
+** FIXED tank bullet can miss on obb, even when two sprites clearly overlap
+I forgot to apply scale for sprites, now it works OK.

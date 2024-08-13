@@ -32,6 +32,128 @@ config cfg = {
     .player_start_pos = (vec){0, 0},
 };
 
+float dot(vec a, vec b) {
+    return a.x*b.x + a.y*b.y;
+}
+
+float distance(vec a, vec b)
+{
+    float dx = b.x - a.x;
+    float dy = b.y - a.y;
+    return sqrt(dx*dx + dy*dy);
+}
+
+typedef struct
+{
+    vec pos;
+    float radius;
+} range;
+
+typedef struct {
+    vec   c;
+    vec   d;
+    vec   e;
+    float r;
+
+} obb;
+
+range ent_to_range(entity_id id)
+{
+    range range;
+    sprite s = sprites[ent[id].type];
+    range.pos = (vec){ ent[id].pos.x + s.size.x/2, ent[id].pos.y + s.size.y/2 };
+    int x = s.size.x/2 * s.scale;
+    int y = s.size.y/2 * s.scale;
+    range.radius = (x > y ? x : y);
+    return range;
+}
+
+obb ent_to_obb(entity_id id)
+{
+    obb o;
+    sprite s = sprites[ent[id].type];
+    o.c = (vec){ ent[id].pos.x + s.size.x / 2, ent[id].pos.y + s.size.y / 2 };
+    o.e = (vec){ s.size.x / 2 * s.scale, s.size.y / 2 * s.scale };
+    o.r = ent[id].r;
+    o.d = ent[id].dir;
+    return o;
+}
+
+Bool check_range_collision(range a, range b)
+{
+    return distance(a.pos, b.pos) <= a.radius + b.radius;
+}
+
+Bool check_range_collision_by_id(entity_id id_a, entity_id id_b)
+{
+    range a = ent_to_range(id_a);
+    range b = ent_to_range(id_b);
+    return distance(a.pos, b.pos) <= a.radius + b.radius;
+}
+
+Bool check_obb_collision(obb* o1, obb* o2) {
+    // vec a1 = {  cos(o1->r), sin(o1->r) };
+    // vec a2 = { -sin(o1->r), cos(o1->r) };
+    // vec a3 = {  cos(o2->r), sin(o2->r) };
+    // vec a4 = { -sin(o2->r), cos(o2->r) };
+
+    // monsters has no rotation so thier dir is (0,0)
+    vec a1 = o1->d;
+    vec a2 = { -o1->d.y, o1->d.x };
+    vec a3 = { 1, 0 };
+    vec a4 = { 0, 1 };
+    
+    // edge lengths
+    vec l1 = o1->e;
+    vec l2 = o2->e;
+
+    // vector between pivots
+    vec l = { o1->c.x - o2->c.x, o1->c.y - o2->c.y };
+
+    float r1, r2, r3, r4;
+
+    // project to a1
+    r1 = l1.x * fabs(dot(a1, a1));
+    r2 = l1.y * fabs(dot(a2, a1));
+    r3 = l2.x * fabs(dot(a3, a1));
+    r4 = l2.y * fabs(dot(a4, a1));
+    if (r1 + r2 + r3 + r4 <= fabs(dot(l, a1)))
+        return false;
+
+    // project to a2
+    r1 = l1.x * fabs(dot(a1, a2));
+    r2 = l1.y * fabs(dot(a2, a2));
+    r3 = l2.x * fabs(dot(a3, a2));
+    r4 = l2.y * fabs(dot(a4, a2));
+    if (r1 + r2 + r3 + r4 <= fabs(dot(l, a2)))
+        return false;
+
+    // project to a3
+    r1 = l1.x * fabs(dot(a1, a3));
+    r2 = l1.y * fabs(dot(a2, a3));
+    r3 = l2.x * fabs(dot(a3, a3));
+    r4 = l2.y * fabs(dot(a4, a3));
+    if (r1 + r2 + r3 + r4 <= fabs(dot(l, a3)))
+        return false;
+
+    // project to a4
+    r1 = l1.x * fabs(dot(a1, a4));
+    r2 = l1.y * fabs(dot(a2, a4));
+    r3 = l2.x * fabs(dot(a3, a4));
+    r4 = l2.y * fabs(dot(a4, a4));
+    if (r1 + r2 + r3 + r4 <= fabs(dot(l, a4))) 
+        return false;
+    
+    return true;
+}
+
+Bool check_obb_collision_by_id(entity_id a, entity_id b)
+{
+    obb o1 = ent_to_obb(a);
+    obb o2 = ent_to_obb(b);
+    return check_obb_collision(&o1, &o2);
+}
+
 vec vec2(float x, float y)
 {
     vec v = {x, y};
@@ -113,8 +235,8 @@ vec screen_to_world(float x, float y)
 vec get_random_pos_on_side(vec origin, int side)
 {
     float fac = 1.2f;
-    int sw = window.width/cfg.zoom  *fac;
-    int sh = window.height/cfg.zoom *fac;
+    int sw = window.scaled_width/cfg.zoom  *fac;
+    int sh = window.scaled_height/cfg.zoom *fac;
     int x, y;
     int dx = rand() % sw;
     int dy = rand() % sh;
@@ -179,7 +301,7 @@ void next_weapon(void)
     cur_weapon = weapon_info[player_char.weapon];
 }
 
-int special_ammo = 0;
+int special_ammo = 10;
 void fire_bullet(void)
 {
     float mouse_x = input_frame.mouse_x;
@@ -191,6 +313,7 @@ void fire_bullet(void)
 
     vec dir = {pos.x - (player_pos.x + offset_x), pos.y - (player_pos.y + offset_y)};
     float length = sqrt(dir.x * dir.x + dir.y * dir.y);
+    if (length == 0) length = 1;
     vec unit_dir = {dir.x / length, dir.y / length};
     vec velocity = {unit_dir.x * cur_weapon.bullet_speed, unit_dir.y * cur_weapon.bullet_speed};
 
@@ -198,7 +321,8 @@ void fire_bullet(void)
     ent[id].velocity.x = velocity.x;
     ent[id].velocity.y = velocity.y;
 
-    ent[id].rotation = (vec){unit_dir.x, unit_dir.y};
+    ent[id].dir = (vec){unit_dir.x, unit_dir.y};
+    ent[id].r = atan2(unit_dir.x, unit_dir.y);
 }
 
 double bullet_fire_cd = 0.5;
@@ -282,8 +406,8 @@ void process_game_input(vec *axis)
 
 void update_view(void)
 {
-    draw_frame.projection = m4_make_orthographic_projection(window.width  * -0.5f, window.width  * 0.5f,
-                                                            window.height * -0.5f, window.height * 0.5f, -1, 10);
+    draw_frame.projection = m4_make_orthographic_projection(window.scaled_width  * -0.5f, window.scaled_width  * 0.5f,
+                                                            window.scaled_height * -0.5f, window.scaled_height * 0.5f, -1, 10);
     vec target_pos = ent[player_id].pos;
     animate_v2_to_d(&camera_pos, target_pos, dt, 15.0f);
 
@@ -296,7 +420,7 @@ void update_view(void)
     draw_frame.view = m4_mul(draw_frame.view, m4_make_scale(v3((scale)/cfg.zoom, (scale)/cfg.zoom, 1.0f)));
 }
 
-Bool check_collision(entity_id ent_id_a, entity_id ent_id_b)
+Bool check_box_collision_by_id(entity_id ent_id_a, entity_id ent_id_b)
 {
     entity a = ent[ent_id_a];
     entity b = ent[ent_id_b];
@@ -319,17 +443,9 @@ Bool check_collision(entity_id ent_id_a, entity_id ent_id_b)
     return False;
 }
 
-
-float distance(vec a, vec b)
-{
-    float dx = b.x - a.x;
-    float dy = b.y - a.y;
-    return sqrt(dx*dx + dy*dy);
-}
-
 void update_bullets(void)
 {
-    int i, j;
+    int i, j; // bullet, monster
     for (i=TILE_ENTITY_MAX; i<max_bullet_id; ++i) { // bullets
         if (ent[i].valid) {
             float d = distance(ent[i].pos, ent[player_id].pos);
@@ -343,19 +459,27 @@ void update_bullets(void)
             ent[i].pos.x += ent[i].velocity.x * dt * cur_weapon.bullet_speed; // TODO @Hardcoded value
             ent[i].pos.y += ent[i].velocity.y * dt * cur_weapon.bullet_speed;
 
-            for (j=BULLET_ENTITY_MAX; j<=max_entity_id; ++j)
-                if(ent[j].valid && (ent[j].type >= ET__monsters_start || ent[j].type <= ET__monsters_end))
-                    if (check_collision(i, j)) {
-                        if(ent[i].type == ET_bullet_tank) {
-                            ent[j].hp -= 5;
-                        } else {
-                            ent[j].hp--;
-                            ent[i].valid = 0;
-                        }
+            for (j=BULLET_ENTITY_MAX; j<=max_monster_id; ++j)
+                if(ent[j].valid && (ent[j].type >= ET__monsters_start || ent[j].type <= ET__monsters_end)) {
+                    //if (check_box_collision_by_id(i, j)) {
+                    if (check_range_collision_by_id(i, j))
+                    {
+                        // obb o1 = ent_to_obb(i);
+                        // obb o2 = ent_to_obb(j);
+                        // if (check_obb_collision(&o1, &o2))
+                        if (check_obb_collision_by_id(i, j))
+                        {
+                            if(ent[i].type == ET_bullet_tank) {
+                                ent[j].hp -= 5;
+                            } else {
+                                ent[j].hp--;
+                                ent[i].valid = 0;
+                            }
 
-                        break;
+                            break;
+                        }
                     }
-            
+                }
         }
     }
 }
@@ -421,7 +545,7 @@ void update_entities(void)
 
             // pickups
             if(ent[i].type == ET_pickup_a) {
-                if(check_collision(i, player_id))
+                if(check_box_collision_by_id(i, player_id))
                 {
                     ent[i].valid = 0;
                     special_ammo += 3;
@@ -429,7 +553,7 @@ void update_entities(void)
             }
 
             if(ent[i].type == ET_pickup_s) {
-                if(check_collision(i, player_id))
+                if(check_box_collision_by_id(i, player_id))
                 {
                     ent[i].valid = 0;
                     increase_fire_rate(2);

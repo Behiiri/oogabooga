@@ -49,13 +49,13 @@ typedef struct
 {
     vec pos;
     vec velocity;
-    vec rotation;
+    vec dir;
     int hp;
     int type;
     uint32 valid;
     float speed;
     float radius;
-    int32 rot;
+    float r;
     
 } entity;
 
@@ -65,8 +65,8 @@ enum
     MODE_menu
 };
 
-//    type               size    layer path                              x    y
-#define ENTITY_TYPES_X                                                  \
+//    type               scale   layer path                               x    y
+#define ENTITY_TYPES_X                                                           \
     X(ET__none,          0.0f,    0,   "../dat/art/error.png",            0,  0) \
     X(ET_player,         1.0f,   21,   "../dat/art/player.png",          10, 15) \
     X(ET_ground,         1.0f,    1,   "../dat/art/ground.png",          16, 16) \
@@ -89,7 +89,7 @@ enum
     X(ET_pickup_c,       0.5f,    1,   "../dat/art/pickup_c.png",        14, 14) \
     X(ET_pickup_m,       0.5f,    1,   "../dat/art/pickup_m.png",        14, 14) \
     X(ET_pickup_s,       0.5f,    1,   "../dat/art/pickup_s.png",        14, 14) \
-    X(ET_gem_green,      0.5f,    1,   "../dat/art/pickup_s.png",        14, 14) \
+    X(ET_gem_green,      0.5f,    1,   "../dat/art/gem_green.png",       14, 14) \
     X(UI_special_ammo,   1.0f,    1,   "../dat/art/ui_special_ammo.png", 16, 16) \
     X(UI_fire_rate,      1.0f,    1,   "../dat/art/ui_fire_rate.png",    16, 16) \
     X(UI_skull,          0.625f,  1,   "../dat/art/ui_skull.png",        16, 16)

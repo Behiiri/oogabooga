@@ -91,7 +91,7 @@ void render_bullets(void)
             // draw_image(g, v2(pos.x, pos.y), sz, COLOR_WHITE);
 
             
-            float radians = atan2(-ent[i].rotation.y, ent[i].rotation.x);
+            float radians = atan2(-ent[i].dir.y, ent[i].dir.x);
             
             Matrix4 m = m4_scalar(1.0);
             m         = m4_translate(m, v3(pos.x, pos.y, 0));
