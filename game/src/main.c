@@ -351,59 +351,6 @@ void increase_fire_rate(int amount)
     bullet_fire_cd = 1.0f/cur_weapon.fire_rate;
 }
 
-void process_game_input(vec *axis)
-{
-    if (is_key_just_pressed(KEY_ESCAPE))
-        window.should_close = true;//toggle_menu();
-    if (is_key_down('A')) axis->x -= 1.0f;
-    if (is_key_down('D')) axis->x += 1.0f;
-    if (is_key_down('S')) axis->y -= 1.0f;
-    if (is_key_down('W')) axis->y += 1.0f;
-    
-    if (is_key_just_pressed('M')) {
-        program_mode = MODE_menu;
-        consume_key_just_pressed('M');
-    }
-    
-    if (is_key_just_pressed('Q'))
-        next_weapon();
-    if (is_key_just_pressed('E'))
-        increase_fire_rate(2);
-    if (is_key_just_pressed('H'))
-        should_draw_info = !should_draw_info;
-    if (is_key_just_pressed('X'))
-        cfg.zoom = 4;
-    if (is_key_down('Z')) {
-        cfg.zoom += 0.01f;
-        if(cfg.zoom > 6)
-            cfg.zoom = 6;
-    }
-    if (is_key_down('C')) {
-        cfg.zoom -= 0.01f;
-        if(cfg.zoom < 1.00)
-            cfg.zoom = 1.00;
-    }
-    if (is_key_just_pressed(MOUSE_BUTTON_RIGHT)) {
-
-            if(special_ammo > 0)
-            {
-                // TODO instead of changing bullet, fire another weapon
-                special_ammo--;
-
-                int cb = cur_weapon.bullet_type;
-                cur_weapon.bullet_type = ET_bullet_tank;
-                fire_bullet();
-                cur_weapon.bullet_type = cb;
-            }
-    }
-    //if (is_key_just_pressed(MOUSE_BUTTON_LEFT)) {
-    if (is_key_down(MOUSE_BUTTON_LEFT)) {
-
-        if(can_fire())
-            fire_bullet();
-    }
-}
-
 void update_view(void)
 {
     draw_frame.projection = m4_make_orthographic_projection(window.scaled_width  * -0.5f, window.scaled_width  * 0.5f,
@@ -562,6 +509,99 @@ void update_entities(void)
         }
 }
 
+void process_debug_input()
+{
+    if (is_key_just_pressed(KEY_ESCAPE) ||
+        is_key_just_pressed(KEY_SPACEBAR)) {
+        program_mode = MODE_game;
+    }
+
+    if (is_key_just_pressed(KEY_F7)) {
+        dt = 0.033;
+        world_timer += dt;
+        update_entities();
+    }
+
+    if (is_key_just_pressed(KEY_F6)) {
+        dt = -0.033;
+        world_timer += dt;
+        update_entities();
+    }
+
+    if (is_key_down(KEY_F8)) {
+        dt = 0.001;
+        world_timer += dt;
+        update_entities();
+    }
+
+    if (is_key_down(KEY_F5)) {
+        dt = -0.001;
+        world_timer += dt;
+        update_entities();
+    }
+}
+
+void process_game_input(vec *axis)
+{
+    if (is_key_just_pressed(KEY_ESCAPE))
+        window.should_close = true;//toggle_menu();
+    if (is_key_down('A')) axis->x -= 1.0f;
+    if (is_key_down('D')) axis->x += 1.0f;
+    if (is_key_down('S')) axis->y -= 1.0f;
+    if (is_key_down('W')) axis->y += 1.0f;
+    
+    if (is_key_just_pressed('M')) {
+        program_mode = MODE_menu;
+        consume_key_just_pressed('M');
+    }
+
+    if (is_key_just_pressed(KEY_F5) ||
+        is_key_just_pressed(KEY_F6) ||
+        is_key_just_pressed(KEY_F7) ||
+        is_key_just_pressed(KEY_F8) ||
+        is_key_just_pressed(KEY_SPACEBAR)) {
+        program_mode = MODE_debug;
+    }
+    
+    if (is_key_just_pressed('Q'))
+        next_weapon();
+    if (is_key_just_pressed('E'))
+        increase_fire_rate(2);
+    if (is_key_just_pressed('H'))
+        should_draw_info = !should_draw_info;
+    if (is_key_just_pressed('X'))
+        cfg.zoom = 4;
+    if (is_key_down('Z')) {
+        cfg.zoom += 0.01f;
+        if(cfg.zoom > 6)
+            cfg.zoom = 6;
+    }
+    if (is_key_down('C')) {
+        cfg.zoom -= 0.01f;
+        if(cfg.zoom < 1.00)
+            cfg.zoom = 1.00;
+    }
+    if (is_key_just_pressed(MOUSE_BUTTON_RIGHT)) {
+
+        if(special_ammo > 0)
+        {
+            // TODO instead of changing bullet, fire another weapon
+            special_ammo--;
+
+            int cb = cur_weapon.bullet_type;
+            cur_weapon.bullet_type = ET_bullet_tank;
+            fire_bullet();
+            cur_weapon.bullet_type = cb;
+        }
+    }
+    //if (is_key_just_pressed(MOUSE_BUTTON_LEFT)) {
+    if (is_key_down(MOUSE_BUTTON_LEFT)) {
+
+        if(can_fire())
+            fire_bullet();
+    }
+}
+
 double game_start_time;
 void gameloop(void)
 {
@@ -587,13 +627,19 @@ void gameloop(void)
         ent[0].pos.x = player_pos.x;
         ent[0].pos.y = player_pos.y;
 
-        
         update_entities();
         render_game();
     } else if(program_mode == MODE_menu)
     {
         process_menu_input();
         draw_menu_view();
+    }
+    else if(program_mode == MODE_debug)
+    {
+        dt = 0;
+        update_view();
+        process_debug_input();
+        render_game();
     }
 }
 

@@ -62,6 +62,7 @@ typedef struct
 enum
 {
     MODE_game,
+    MODE_debug,
     MODE_menu
 };
 
