@@ -9,8 +9,11 @@ extern int get_random_int(void);
 extern int get_random_int_range(int min, int max);
 extern vec screen_to_world(float x, float y);
 extern vec get_random_spawn_pos(vec origin);
+extern obb ent_to_obb(entity_id id);
+extern box ent_to_box(entity_id id);
+extern range ent_to_range(entity_id id);
 
-// monster
+// monster.c
 extern monster get_monster_info(int type);
 extern entity_id monster_id(int i);
 

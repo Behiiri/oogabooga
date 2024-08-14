@@ -49,19 +49,6 @@ float distance(vec a, vec b)
     return sqrt(dx*dx + dy*dy);
 }
 
-typedef struct
-{
-    vec c;
-    float r;
-} range;
-
-typedef struct {
-    vec   c;
-    vec   u;
-    vec   e;
-
-} obb;
-
 range ent_to_range(entity_id id)
 {
     range range;
@@ -78,7 +65,7 @@ obb ent_to_obb(entity_id id)
     obb o;
     sprite s = sprites[ent[id].type];
     o.c = vec2(ent[id].pos.x + s.size.x/2, ent[id].pos.y + s.size.y/2);
-    o.e = vec2(s.size.x/2 * s.scale, s.size.y/2 * s.scale);
+    o.e = vec2(s.size.x/2, s.size.y/2);
     o.u = ent[id].dir;
     return o;
 }
@@ -106,7 +93,8 @@ Bool check_obb_collision(obb* o1, obb* o2) {
     vec a2 = { -o1->u.y, o1->u.x };
     vec a3 = { 1, 0 };
     vec a4 = { 0, 1 };
-    
+    //vec a3 = o2->u;
+    //vec a4 = { -o2->u.y, o2->u.x };
     // edge lengths
     vec l1 = o1->e;
     vec l2 = o2->e;
@@ -122,7 +110,7 @@ Bool check_obb_collision(obb* o1, obb* o2) {
     r3 = l2.x * fabs(dot(a3, a1));
     r4 = l2.y * fabs(dot(a4, a1));
     if (r1 + r2 + r3 + r4 <= fabs(dot(l, a1)))
-        return false;
+        return False;
 
     // project to a2
     r1 = l1.x * fabs(dot(a1, a2));
@@ -130,7 +118,7 @@ Bool check_obb_collision(obb* o1, obb* o2) {
     r3 = l2.x * fabs(dot(a3, a2));
     r4 = l2.y * fabs(dot(a4, a2));
     if (r1 + r2 + r3 + r4 <= fabs(dot(l, a2)))
-        return false;
+        return False;
 
     // project to a3
     r1 = l1.x * fabs(dot(a1, a3));
@@ -138,17 +126,17 @@ Bool check_obb_collision(obb* o1, obb* o2) {
     r3 = l2.x * fabs(dot(a3, a3));
     r4 = l2.y * fabs(dot(a4, a3));
     if (r1 + r2 + r3 + r4 <= fabs(dot(l, a3)))
-        return false;
+        return False;
 
     // project to a4
     r1 = l1.x * fabs(dot(a1, a4));
     r2 = l1.y * fabs(dot(a2, a4));
     r3 = l2.x * fabs(dot(a3, a4));
     r4 = l2.y * fabs(dot(a4, a4));
-    if (r1 + r2 + r3 + r4 <= fabs(dot(l, a4))) 
-        return false;
-    
-    return true;
+    if (r1 + r2 + r3 + r4 <= fabs(dot(l, a4)))
+        return False;
+
+    return True;
 }
 
 Bool check_obb_collision_by_id(entity_id a, entity_id b)
@@ -238,7 +226,7 @@ vec get_random_pos_on_side(vec origin, int side)
     int x, y;
     int dx = rand() % sw;
     int dy = rand() % sh;
-    
+
     switch(side) {
         case LEFT: // 0
         x = origin.x - sw/2 - dx/(fac);
@@ -358,35 +346,28 @@ void update_view(void)
     float scale_x = SCREEN_X/window.width;
     float scale_y = SCREEN_Y/window.height;
     float scale = scale_x > scale_y ? scale_x : scale_y;
-    
+
     draw_frame.view = m4_make_scale(v3(1.0, 1.0, 1.0));
     draw_frame.view = m4_mul(draw_frame.view, m4_make_translation(v3(camera_pos.x, camera_pos.y, 0)));
     draw_frame.view = m4_mul(draw_frame.view, m4_make_scale(v3((scale)/cfg.zoom, (scale)/cfg.zoom, 1.0f)));
 }
 
-typedef struct {
-    vec min;
-    vec max;
-} box;
-
-box ent_to_box(int id)
+box ent_to_box(entity_id id)
 {
     entity e = ent[id];
-    float  x = e.pos.x;
-    float  y = e.pos.y;
-    float  w = sprites[e.type].size.x * sprites[e.type].scale;
-    float  h = sprites[e.type].size.y * sprites[e.type].scale;
-    return (box) {e.pos, (vec) { x+w, y+h }};
+    float  w = sprites[e.type].size.x;
+    float  h = sprites[e.type].size.y;
+    return (box) {e.pos, (vec) { e.pos.x+w, e.pos.y+h }};
 }
 
 Bool check_box_collision_by_id(entity_id id_a, entity_id id_b)
 {
     box a = ent_to_box(id_a);
     box b = ent_to_box(id_b);
-    
+
     if (a.max.x < b.min.x || a.min.x > b.max.x) return False;
     if (a.max.y < b.min.y || a.min.y > b.max.y) return False;
-    
+
     return True;
 }
 
@@ -441,7 +422,7 @@ Bool is_out_of_screen(vec origin, vec pos, float factor)
     float rb = origin.x + VIEW_WIDTH/2  * factor;
     float tb = origin.y - VIEW_HEIGHT/2 * factor;
     float bb = origin.y + VIEW_HEIGHT/2 * factor;
-    
+
     return (pos.x < lb || pos.x > rb || pos.y < tb || pos.y > bb);
 }
 
@@ -521,7 +502,7 @@ Bool is_mouse_over_an_entity(int *ent_id)
     box a = ent_to_box(0);
     if(!(mouse_x < a.min.x || mouse_x > a.max.x) &&
        !(mouse_y < a.min.y || mouse_y > a.max.y)) {
-            
+
         *ent_id = 0;
         return True;
     }
@@ -533,7 +514,7 @@ Bool is_mouse_over_an_entity(int *ent_id)
             if(mouse_x < a.min.x || mouse_x > a.max.x) continue;
             if(mouse_y < a.min.y || mouse_y > a.max.y) continue;
 
-            *ent_id = i; 
+            *ent_id = i;
             return True;
     }
 
@@ -549,7 +530,7 @@ Bool is_mouse_over_an_entity(int *ent_id)
             return True;
         }
     }
-    
+
     for( i=TILE_ENTITY_MIN; i<max_tile_id; ++i ) {
             box a = ent_to_box(i);
 
@@ -559,17 +540,23 @@ Bool is_mouse_over_an_entity(int *ent_id)
             *ent_id = i;
             return True;
     }
-    
+
     return False;
 }
 
 entity_id selected_debug_entity_id;
+Bool show_debug_info;
 void process_debug_input(void)
 {
     if (is_key_just_pressed(KEY_ESCAPE) ||
         is_key_just_pressed(KEY_SPACEBAR)) {
         program_mode = MODE_game;
+        //show_debug_info = False;
     }
+
+    if (is_key_just_pressed(KEY_F4))
+        show_debug_info = !show_debug_info;
+
 
     if (is_key_just_pressed(KEY_F7)) {
         dt = 0.033;
@@ -595,22 +582,22 @@ void process_debug_input(void)
         update_entities();
     }
 
-    static Bool is_rmb_down = false;
+    static Bool is_rmb_down = False;
     static vec camera_pos_on_drag;
-    
+
     if (is_key_just_pressed(MOUSE_BUTTON_MIDDLE) ||
         is_key_just_pressed(MOUSE_BUTTON_RIGHT)) {
-        is_rmb_down = true;
-        
+        is_rmb_down = True;
+
         float mouse_x = input_frame.mouse_x;
         float mouse_y = input_frame.mouse_y;
         vec pos = screen_to_world(mouse_x, mouse_y);
         camera_pos_on_drag = (vec) {pos.x, pos.y};
     }
-        
+
     if (is_key_just_released(MOUSE_BUTTON_MIDDLE) ||
         is_key_just_released(MOUSE_BUTTON_RIGHT)) {
-        is_rmb_down = false;
+        is_rmb_down = False;
     }
 
     if(is_rmb_down)
@@ -625,19 +612,19 @@ void process_debug_input(void)
     if (is_key_just_pressed(MOUSE_BUTTON_LEFT)) {
         int ent_id;
         if(is_mouse_over_an_entity(&ent_id))
-        {
             selected_debug_entity_id = ent_id;
-        }
+        else
+            selected_debug_entity_id = -1;
     }
 
     if (is_key_just_pressed('X'))
         cfg.zoom = 4;
-    if (is_key_down('Z')) {
+    if (is_key_down('Z') || is_key_down('E')) {
         cfg.zoom += 0.01f;
         if(cfg.zoom > 6)
             cfg.zoom = 6;
     }
-    if (is_key_down('C')) {
+    if (is_key_down('C') || is_key_down('Q')) {
         cfg.zoom -= 0.01f;
         if(cfg.zoom < 1.00)
             cfg.zoom = 1.00;
@@ -661,12 +648,12 @@ void process_debug_input(void)
 void process_game_input(vec *axis)
 {
     if (is_key_just_pressed(KEY_ESCAPE))
-        window.should_close = true;//toggle_menu();
+        window.should_close = True;//toggle_menu();
     if (is_key_down('A')) axis->x -= 1.0f;
     if (is_key_down('D')) axis->x += 1.0f;
     if (is_key_down('S')) axis->y -= 1.0f;
     if (is_key_down('W')) axis->y += 1.0f;
-    
+
     if (is_key_just_pressed('M')) {
         program_mode = MODE_menu;
         consume_key_just_pressed('M');
@@ -678,14 +665,20 @@ void process_game_input(vec *axis)
         is_key_just_pressed(KEY_F8) ||
         is_key_just_pressed(KEY_SPACEBAR)) {
         program_mode = MODE_debug;
+        show_debug_info = True;
     }
-    
+
+    if (is_key_just_pressed(KEY_F4))
+        show_debug_info = !show_debug_info;
+
     if (is_key_just_pressed('Q'))
         next_weapon();
     if (is_key_just_pressed('E'))
         increase_fire_rate(2);
-    if (is_key_just_pressed('H'))
+    if (is_key_just_pressed('H')) {
         should_draw_info = !should_draw_info;
+    }
+
     if (is_key_just_pressed('X'))
         cfg.zoom = 4;
     if (is_key_down('Z')) {
@@ -730,7 +723,7 @@ void gameloop(void)
         process_game_input(&input_axis);
 
         Vector2 v2_input_axis = vec_to_v2(input_axis);
-        
+
         v2_input_axis = v2_normalize(v2_input_axis);
 
         input_axis.x = v2_input_axis.x;
@@ -782,7 +775,7 @@ void game_init(void)
 
     world_init();
     render_init();
-    
+
     menu_init();
 }
 

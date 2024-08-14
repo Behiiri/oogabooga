@@ -48,6 +48,7 @@ enum
 typedef struct
 {
     vec pos;
+    vec size;
     vec velocity;
     vec dir;
     int hp;
@@ -56,7 +57,7 @@ typedef struct
     float speed;
     float radius;
     int32 rot;
-    
+
 } entity;
 
 enum
@@ -214,6 +215,23 @@ enum
     CH_001,
     CH_002,
 };
-    
-#endif
 
+typedef struct {
+    vec min;
+    vec max;
+} box;
+
+typedef struct
+{
+    vec c;
+    float r;
+} range;
+
+typedef struct {
+    vec   c;
+    vec   u;
+    vec   e;
+
+} obb;
+
+#endif

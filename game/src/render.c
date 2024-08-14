@@ -33,7 +33,7 @@ Gfx_Image* load_sprite_by_id(int id)
     char * filename = sprite_files[id].filename;
     Gfx_Image *image = load_image_from_disk(STR(filename), get_heap_allocator());
     assert(image, "load_sprite: Failed loading image %cs", filename);
-    return image; 
+    return image;
 }
 
 void render_init(void)
@@ -53,6 +53,76 @@ void render_init(void)
     }
 }
 
+Vector2 rotate_vector(Vector2 v, Vector2 p, float r)
+{
+    v.x -= p.x;
+    v.y -= p.y;
+
+    float rx = v.x * cos(r) - v.y * sin(r);
+    float ry = v.x * sin(r) + v.y * cos(r);
+
+    v.x = rx + p.x;
+    v.y = ry + p.y;
+
+    return v;
+}
+
+void draw_box(box b)
+{
+    Vector2 p0 = v2(b.min.x, b.min.y);
+    Vector2 p1 = v2(b.min.x, b.max.y);
+    Vector2 p2 = v2(b.max.x, b.max.y);
+    Vector2 p3 = v2(b.max.x, b.min.y);
+    float s = 0.5;
+    draw_line(p0, p1, s, (Vector4){0.2, 0.2, 0.2, 1.0});
+    draw_line(p1, p2, s, (Vector4){0.2, 0.2, 0.2, 1.0});
+    draw_line(p2, p3, s, (Vector4){0.2, 0.2, 0.2, 1.0});
+    draw_line(p3, p0, s, (Vector4){0.2, 0.2, 0.2, 1.0});
+}
+
+void draw_all_entity_aabb()
+{
+    int i;
+    for (i=TILE_ENTITY_MAX; i<max_entity_id; ++i)
+        if (ent[i].valid)
+            draw_box(ent_to_box(i));
+}
+
+void draw_obb(obb o)
+{
+    vec c = o.c;
+    vec u = o.u;
+    vec e = o.e;
+
+    float s = 0.5f;
+    Vector2 p0 = v2(c.x-e.x, c.y-e.y);
+    Vector2 p1 = v2(c.x+e.x, c.y-e.y);
+    Vector2 p2 = v2(c.x+e.x, c.y+e.y);
+    Vector2 p3 = v2(c.x-e.x, c.y+e.y);
+
+    float r = atan2(u.y, u.x);
+    p0 = rotate_vector(p0, p0, r);
+    p1 = rotate_vector(p1, p0, r);
+    p2 = rotate_vector(p2, p0, r);
+    p3 = rotate_vector(p3, p0, r);
+
+    draw_line(p0, p1, s, (Vector4){0.8, 1.0, 0.0, 1.0});
+    draw_line(p1, p2, s, (Vector4){0.8, 1.0, 0.0, 1.0});
+    draw_line(p2, p3, s, (Vector4){0.8, 1.0, 0.0, 1.0});
+    draw_line(p3, p0, s, (Vector4){0.8, 1.0, 0.0, 1.0});
+
+    draw_circle(v2(p0.x-0.5f, p0.y-0.5f), v2(1,1), COLOR_RED);
+}
+
+void draw_all_entity_obb()
+{
+    int i;
+    for (i=TILE_ENTITY_MAX; i<max_bullet_id; ++i)
+        if (ent[i].valid)
+            draw_obb(ent_to_obb(i));
+}
+
+
 extern vec player_pos;
 void render_player(void)
 {
@@ -62,6 +132,7 @@ void render_player(void)
     draw_image_xform(sprites[ET_player].tex, m, sz, COLOR_WHITE);
 }
 
+extern int show_debug_info;
 void render_entities(void)
 {
     int i;
@@ -71,13 +142,12 @@ void render_entities(void)
             Gfx_Image *g = sprites[type].tex;
             int layer = sprites[type].layer;
             Vector2 sz = sprites[type].size;
-            vec pos = ent[i].pos;
+            vec p = ent[i].pos;
             push_z_layer(layer);
-            draw_image(g, v2(pos.x, pos.y), sz, COLOR_WHITE);
+            draw_image(g, v2(p.x, p.y), sz, COLOR_WHITE);
             pop_z_layer();
         }
 }
-
 
 void render_bullets(void)
 {
@@ -87,18 +157,18 @@ void render_bullets(void)
             int type = ent[i].type;
             Gfx_Image *g = sprites[type].tex;
             Vector2 sz = sprites[type].size;
-            vec pos = ent[i].pos;
+            vec p = ent[i].pos;
             // draw_image(g, v2(pos.x, pos.y), sz, COLOR_WHITE);
 
-            
+
             float radians = atan2(-ent[i].dir.y, ent[i].dir.x);
-            
+
             Matrix4 m = m4_scalar(1.0);
-            m         = m4_translate(m, v3(pos.x, pos.y, 0));
+            m         = m4_translate(m, v3(p.x, p.y, 0));
             //m         = m4_rotate_z(m, );
             m         = m4_rotate(m, v3(0.0f,0.0f,1.0f), radians);
             // push_z_layer(1000001);
-            draw_image_xform(g, m, sz, COLOR_WHITE); 
+            draw_image_xform(g, m, sz, COLOR_WHITE);
             // pop_z_layer();
         }
 }
@@ -109,21 +179,21 @@ void render_tiles(void)
     { // tiled background
         float window_w = window.width;
         float window_h = window.height;
-        
+
         Vector2 sz = v2(TILE_SIZE, TILE_SIZE);
         vec p_pos = ent[0].pos;
         int p_tile_x = world_to_tile_pos(p_pos.x);
         int p_tile_y = world_to_tile_pos(p_pos.y);
         int max_i = (window_w / cfg.zoom / TILE_SIZE) + 1;
         int max_j = (window_h / cfg.zoom / TILE_SIZE) + 1;
-        
+
         // log("%d, %d", max_i, max_j);
         int i, j;
         for (i=-max_i;i<max_i;++i)
             for (j = -max_j; j < max_j; ++j){
                 int tile_x = i + p_tile_x;
                 int tile_y = j + p_tile_y;
-                
+
                 if ((tile_x + tile_y) % 2 == 0)
                 {
                     Vector2 pos = v2(tile_x * TILE_SIZE,
@@ -132,7 +202,7 @@ void render_tiles(void)
                 }
             }
     }
-    
+
 
     int i;
     for (i=1;i<max_tile_id;++i) // ent[0] is player
@@ -182,7 +252,7 @@ void draw_info(void)
         temp_fps = 1.0f/dt;
         temp_dt = dt;
     }
-    
+
     draw_text_on_screen(0, (p+fh*s)*o++, s, tprint(STR("fps:  %.2f  dt: %f"), temp_fps, temp_dt));
     //draw_text_on_screen(0, (p+fh*s)*o++, s, tprint(STR("max_tile_id:  %d"), max_tile_id));
     //draw_text_on_screen(0, (p+fh*s)*o++, s, tprint(STR("max_bullet_id:  %d"), max_bullet_id));
@@ -218,7 +288,7 @@ void render_ui(void)
         Vector2 pos = v2(x, y);
         pos.y -= p*o++;
         draw_image(g, pos, sz, COLOR_WHITE);
-    
+
         string str = tprint(STR("%d"), special_ammo);
         Gfx_Text_Metrics str_metrics = measure_text(font, str, fh, v2(scale, scale));
 
@@ -227,7 +297,7 @@ void render_ui(void)
 
         draw_text(font, str, fh, pos, v2(scale, scale), COLOR_WHITE);
     }
-    
+
     { // fire rate
         Gfx_Image *g = sprites[UI_fire_rate].tex;
         Vector2 sz = sprites[UI_fire_rate].size;
@@ -249,8 +319,8 @@ void render_ui(void)
         Gfx_Text_Metrics str_metrics = measure_text(font, STR("time:  8888.88"), fh, v2(scale, scale));
         int y = window.height/20 + str_metrics.functional_size.y;
         int x = window.width/2 - str_metrics.functional_size.x;
-        
-        draw_text_on_screen(x, y, scale, str); 
+
+        draw_text_on_screen(x, y, scale, str);
     }
 
     { // skull annd kill count
@@ -262,7 +332,7 @@ void render_ui(void)
 
         string str = tprint(STR("%d"), kill_count);
         // Gfx_Text_Metrics str_metrics = measure_text(font, str, fh, v2(scale, scale));
-        
+
         pos.y = pos.y + sz.y/3;
         pos.x = pos.x + sz.x + 3;
         draw_text(font, str, fh, pos, v2(scale, scale), COLOR_WHITE);
@@ -270,15 +340,15 @@ void render_ui(void)
 }
 
 extern entity_id selected_debug_entity_id;
-void render_debug_info(void)
+void render_debug_ui(void)
 {
     int w = 320;
     int h = 180;
-    
+
     draw_frame.view = m4_make_scale(v3(1.0, 1.0, 1.0));
     draw_frame.projection = m4_make_orthographic_projection(0, w,
                                                             0, h, -1, 10);
-    
+
     float s = 0.2f;
     int fh = font_height;
     int p = 1;
@@ -290,8 +360,8 @@ void render_debug_info(void)
     rect_xform         = m4_translate(rect_xform, v3(px, 0, 0));
     draw_rect_xform(rect_xform, v2(w - px, h), v4(0.1,0.2,0.2,1));
 
-    // h = h - 10; 
-    {   
+    // h = h - 10;
+    {
         string str = tprint(STR("entity info:"));
         Gfx_Text_Metrics metric = measure_text(font, str, fh, v2(s, s));
         int x = px + (w - px - metric.visual_size.x)/2;
@@ -304,7 +374,7 @@ void render_debug_info(void)
         int x = px + (w - px - metric.visual_size.x)/2;
         draw_text(font, str, fh, v2(x, h - (p+fh*s)*o++-metric.visual_size.y), v2(s, s), COLOR_WHITE);
     }
-    
+
     {   // pos
         vec epos = ent[selected_debug_entity_id].pos;
         string str = tprint(STR("pos: %.1f, %.1f"), epos.x, epos.y);
@@ -320,7 +390,7 @@ void render_debug_info(void)
         int x = px + (w - px - metric.visual_size.x)/2;
         draw_text(font, str, fh, v2(x, h - (p+fh*s)*o++-metric.visual_size.y), v2(s, s), COLOR_WHITE);
     }
-    
+
     {   // dir
         vec v = ent[selected_debug_entity_id].dir;
         string str = tprint(STR("dir: %.1f, %.1f"), v.x, v.y);
@@ -343,15 +413,15 @@ void render_debug_info(void)
         int x = px + (w - px - metric.visual_size.x)/2;
         draw_text(font, str, fh, v2(x, h - (p+fh*s)*o++-metric.visual_size.y), v2(s, s), COLOR_WHITE);
     }
-    
-    {   // speed 
+
+    {   // speed
         int v = ent[selected_debug_entity_id].speed;
         string str = tprint(STR("speed:%d"), v);
         Gfx_Text_Metrics metric = measure_text(font, str, fh, v2(s, s));
         int x = px + (w - px - metric.visual_size.x)/2;
         draw_text(font, str, fh, v2(x, h - (p+fh*s)*o++-metric.visual_size.y), v2(s, s), COLOR_WHITE);
     }
-    
+
     {   // radius
         int v = ent[selected_debug_entity_id].radius;
         string str = tprint(STR("radius:%d"), v);
@@ -364,16 +434,29 @@ void render_debug_info(void)
 static Bool should_draw_info = 0;
 void render_game(void)
 {
+    //
+    // Game
+    //
     render_tiles();
     render_entities();
     render_bullets();
     render_player();
-    render_ui();
 
+    if(show_debug_info) {
+        draw_all_entity_aabb();
+        draw_all_entity_obb();
+    }
+
+    //
+    // UI
+    //
     if(program_mode == MODE_debug)
-        render_debug_info();
+        if(selected_debug_entity_id != -1)
+            render_debug_ui();
+
+    render_ui();
     
     if(should_draw_info)
         draw_info();
-}
 
+}
