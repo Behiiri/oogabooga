@@ -32,6 +32,12 @@ config cfg = {
     .player_start_pos = (vec){0, 0},
 };
 
+vec vec2(float x, float y)
+{
+    vec v = {x, y};
+    return v;
+}
+
 float dot(vec a, vec b) {
     return a.x*b.x + a.y*b.y;
 }
@@ -45,15 +51,14 @@ float distance(vec a, vec b)
 
 typedef struct
 {
-    vec pos;
-    float radius;
+    vec c;
+    float r;
 } range;
 
 typedef struct {
     vec   c;
-    vec   d;
+    vec   u;
     vec   e;
-    float r;
 
 } obb;
 
@@ -61,10 +66,10 @@ range ent_to_range(entity_id id)
 {
     range range;
     sprite s = sprites[ent[id].type];
-    range.pos = (vec){ ent[id].pos.x + s.size.x/2, ent[id].pos.y + s.size.y/2 };
+    range.c = (vec){ ent[id].pos.x + s.size.x/2, ent[id].pos.y + s.size.y/2 };
     int x = s.size.x/2 * s.scale;
     int y = s.size.y/2 * s.scale;
-    range.radius = (x > y ? x : y);
+    range.r = (x > y ? x : y);
     return range;
 }
 
@@ -72,23 +77,22 @@ obb ent_to_obb(entity_id id)
 {
     obb o;
     sprite s = sprites[ent[id].type];
-    o.c = (vec){ ent[id].pos.x + s.size.x / 2, ent[id].pos.y + s.size.y / 2 };
-    o.e = (vec){ s.size.x / 2 * s.scale, s.size.y / 2 * s.scale };
-    o.r = ent[id].r;
-    o.d = ent[id].dir;
+    o.c = vec2(ent[id].pos.x + s.size.x/2, ent[id].pos.y + s.size.y/2);
+    o.e = vec2(s.size.x/2 * s.scale, s.size.y/2 * s.scale);
+    o.u = ent[id].dir;
     return o;
 }
 
 Bool check_range_collision(range a, range b)
 {
-    return distance(a.pos, b.pos) <= a.radius + b.radius;
+    return distance(a.c, b.c) <= a.r + b.r;
 }
 
 Bool check_range_collision_by_id(entity_id id_a, entity_id id_b)
 {
     range a = ent_to_range(id_a);
     range b = ent_to_range(id_b);
-    return distance(a.pos, b.pos) <= a.radius + b.radius;
+    return distance(a.c, b.c) <= a.r + b.r;
 }
 
 Bool check_obb_collision(obb* o1, obb* o2) {
@@ -98,8 +102,8 @@ Bool check_obb_collision(obb* o1, obb* o2) {
     // vec a4 = { -sin(o2->r), cos(o2->r) };
 
     // monsters has no rotation so thier dir is (0,0)
-    vec a1 = o1->d;
-    vec a2 = { -o1->d.y, o1->d.x };
+    vec a1 = o1->u;
+    vec a2 = { -o1->u.y, o1->u.x };
     vec a3 = { 1, 0 };
     vec a4 = { 0, 1 };
     
@@ -152,12 +156,6 @@ Bool check_obb_collision_by_id(entity_id a, entity_id b)
     obb o1 = ent_to_obb(a);
     obb o2 = ent_to_obb(b);
     return check_obb_collision(&o1, &o2);
-}
-
-vec vec2(float x, float y)
-{
-    vec v = {x, y};
-    return v;
 }
 
 int get_random_int(void) {
@@ -322,12 +320,11 @@ void fire_bullet(void)
     ent[id].velocity.y = velocity.y;
 
     ent[id].dir = (vec){unit_dir.x, unit_dir.y};
-    ent[id].r = atan2(unit_dir.x, unit_dir.y);
 }
 
 double bullet_fire_cd = 0.5;
 double last_fire_time = 0;
-Bool can_fire()
+Bool can_fire(void)
 {
     double now = world_timer;
     if(now - last_fire_time >= bullet_fire_cd)
@@ -367,27 +364,30 @@ void update_view(void)
     draw_frame.view = m4_mul(draw_frame.view, m4_make_scale(v3((scale)/cfg.zoom, (scale)/cfg.zoom, 1.0f)));
 }
 
-Bool check_box_collision_by_id(entity_id ent_id_a, entity_id ent_id_b)
+typedef struct {
+    vec min;
+    vec max;
+} box;
+
+box ent_to_box(int id)
 {
-    entity a = ent[ent_id_a];
-    entity b = ent[ent_id_b];
-    float ax = a.pos.x;
-    float ay = a.pos.y;
-    float bx = b.pos.x;
-    float by = b.pos.y;
-    float aw = sprites[a.type].size.x * sprites[a.type].scale;
-    float ah = sprites[a.type].size.y * sprites[a.type].scale;
-    float bw = sprites[b.type].size.x * sprites[b.type].scale;
-    float bh = sprites[b.type].size.y * sprites[b.type].scale;
+    entity e = ent[id];
+    float  x = e.pos.x;
+    float  y = e.pos.y;
+    float  w = sprites[e.type].size.x * sprites[e.type].scale;
+    float  h = sprites[e.type].size.y * sprites[e.type].scale;
+    return (box) {e.pos, (vec) { x+w, y+h }};
+}
 
-    if (ax < bx + bw &&
-        ax + aw > bx &&
-        ay < by + bh &&
-        ay + ah > by) {
-        return True;
-    }
-
-    return False;
+Bool check_box_collision_by_id(entity_id id_a, entity_id id_b)
+{
+    box a = ent_to_box(id_a);
+    box b = ent_to_box(id_b);
+    
+    if (a.max.x < b.min.x || a.min.x > b.max.x) return False;
+    if (a.max.y < b.min.y || a.min.y > b.max.y) return False;
+    
+    return True;
 }
 
 void update_bullets(void)
@@ -492,7 +492,7 @@ void update_entities(void)
 
             // pickups
             if(ent[i].type == ET_pickup_a) {
-                if(check_box_collision_by_id(i, player_id))
+                if(check_range_collision_by_id(i, player_id))
                 {
                     ent[i].valid = 0;
                     special_ammo += 3;
@@ -500,7 +500,7 @@ void update_entities(void)
             }
 
             if(ent[i].type == ET_pickup_s) {
-                if(check_box_collision_by_id(i, player_id))
+                if(check_range_collision_by_id(i, player_id))
                 {
                     ent[i].valid = 0;
                     increase_fire_rate(2);
@@ -509,7 +509,62 @@ void update_entities(void)
         }
 }
 
-void process_debug_input()
+Bool is_mouse_over_an_entity(int *ent_id)
+{
+    float mouse_x = input_frame.mouse_x;
+    float mouse_y = input_frame.mouse_y;
+    vec pos = screen_to_world(mouse_x, mouse_y);
+
+    mouse_x = pos.x;
+    mouse_y = pos.y;
+
+    box a = ent_to_box(0);
+    if(!(mouse_x < a.min.x || mouse_x > a.max.x) &&
+       !(mouse_y < a.min.y || mouse_y > a.max.y)) {
+            
+        *ent_id = 0;
+        return True;
+    }
+
+    int i;
+    for( i=MONSTER_ENTITY_MIN; i<max_monster_id; ++i ) {
+            box a = ent_to_box(i);
+
+            if(mouse_x < a.min.x || mouse_x > a.max.x) continue;
+            if(mouse_y < a.min.y || mouse_y > a.max.y) continue;
+
+            *ent_id = i; 
+            return True;
+    }
+
+    for( i=BULLET_ENTITY_MIN; i<max_bullet_id; ++i ) {
+        obb a = ent_to_obb(i);
+        obb m = { (vec){mouse_x, mouse_y},
+            (vec){1, 0},
+            (vec){3, 3}
+        };
+        if(check_obb_collision(&a, &m))
+        {
+            *ent_id = i;
+            return True;
+        }
+    }
+    
+    for( i=TILE_ENTITY_MIN; i<max_tile_id; ++i ) {
+            box a = ent_to_box(i);
+
+            if(mouse_x < a.min.x || mouse_x > a.max.x) continue;
+            if(mouse_y < a.min.y || mouse_y > a.max.y) continue;
+
+            *ent_id = i;
+            return True;
+    }
+    
+    return False;
+}
+
+entity_id selected_debug_entity_id;
+void process_debug_input(void)
 {
     if (is_key_just_pressed(KEY_ESCAPE) ||
         is_key_just_pressed(KEY_SPACEBAR)) {
@@ -538,6 +593,68 @@ void process_debug_input()
         dt = -0.001;
         world_timer += dt;
         update_entities();
+    }
+
+    static Bool is_rmb_down = false;
+    static vec camera_pos_on_drag;
+    
+    if (is_key_just_pressed(MOUSE_BUTTON_MIDDLE) ||
+        is_key_just_pressed(MOUSE_BUTTON_RIGHT)) {
+        is_rmb_down = true;
+        
+        float mouse_x = input_frame.mouse_x;
+        float mouse_y = input_frame.mouse_y;
+        vec pos = screen_to_world(mouse_x, mouse_y);
+        camera_pos_on_drag = (vec) {pos.x, pos.y};
+    }
+        
+    if (is_key_just_released(MOUSE_BUTTON_MIDDLE) ||
+        is_key_just_released(MOUSE_BUTTON_RIGHT)) {
+        is_rmb_down = false;
+    }
+
+    if(is_rmb_down)
+    {
+        float mouse_x = input_frame.mouse_x;
+        float mouse_y = input_frame.mouse_y;
+        vec pos = screen_to_world(mouse_x, mouse_y);
+        camera_pos = (vec) {camera_pos.x + camera_pos_on_drag.x - pos.x,
+            camera_pos.y + camera_pos_on_drag.y - pos.y};
+    }
+
+    if (is_key_just_pressed(MOUSE_BUTTON_LEFT)) {
+        int ent_id;
+        if(is_mouse_over_an_entity(&ent_id))
+        {
+            selected_debug_entity_id = ent_id;
+        }
+    }
+
+    if (is_key_just_pressed('X'))
+        cfg.zoom = 4;
+    if (is_key_down('Z')) {
+        cfg.zoom += 0.01f;
+        if(cfg.zoom > 6)
+            cfg.zoom = 6;
+    }
+    if (is_key_down('C')) {
+        cfg.zoom -= 0.01f;
+        if(cfg.zoom < 1.00)
+            cfg.zoom = 1.00;
+    }
+
+    if (is_key_down('A')) camera_pos.x -= 0.5f;
+    if (is_key_down('D')) camera_pos.x += 0.5f;
+    if (is_key_down('S')) camera_pos.y -= 0.5f;
+    if (is_key_down('W')) camera_pos.y += 0.5f;
+
+    for (u64 i = 0; i < input_frame.number_of_events; i++) {
+        Input_Event e = input_frame.events[i];
+
+        if(e.kind == INPUT_EVENT_SCROLL) {
+            cfg.zoom += 0.25f * e.yscroll;
+            break;
+        }
     }
 }
 

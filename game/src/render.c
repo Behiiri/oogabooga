@@ -269,6 +269,98 @@ void render_ui(void)
     }
 }
 
+extern entity_id selected_debug_entity_id;
+void render_debug_info(void)
+{
+    int w = 320;
+    int h = 180;
+    
+    draw_frame.view = m4_make_scale(v3(1.0, 1.0, 1.0));
+    draw_frame.projection = m4_make_orthographic_projection(0, w,
+                                                            0, h, -1, 10);
+    
+    float s = 0.2f;
+    int fh = font_height;
+    int p = 1;
+    int o = 0;
+
+    int px = w/10*7.5;
+
+    Matrix4 rect_xform = m4_scalar(1.0);
+    rect_xform         = m4_translate(rect_xform, v3(px, 0, 0));
+    draw_rect_xform(rect_xform, v2(w - px, h), v4(0.1,0.2,0.2,1));
+
+    // h = h - 10; 
+    {   
+        string str = tprint(STR("entity info:"));
+        Gfx_Text_Metrics metric = measure_text(font, str, fh, v2(s, s));
+        int x = px + (w - px - metric.visual_size.x)/2;
+        draw_text(font, str, fh, v2(x, h - (p+fh*s)*o++-metric.visual_size.y), v2(s, s), COLOR_WHITE);
+    }
+
+    {   // entity Id
+        string str = tprint(STR("id:%d"), selected_debug_entity_id);
+        Gfx_Text_Metrics metric = measure_text(font, str, fh, v2(s, s));
+        int x = px + (w - px - metric.visual_size.x)/2;
+        draw_text(font, str, fh, v2(x, h - (p+fh*s)*o++-metric.visual_size.y), v2(s, s), COLOR_WHITE);
+    }
+    
+    {   // pos
+        vec epos = ent[selected_debug_entity_id].pos;
+        string str = tprint(STR("pos: %.1f, %.1f"), epos.x, epos.y);
+        Gfx_Text_Metrics metric = measure_text(font, str, fh, v2(s, s));
+        int x = px + (w - px - metric.functional_size.x)/2;
+        draw_text(font, str, fh, v2(x, h - (p+fh*s)*o++-metric.visual_size.y), v2(s, s), COLOR_WHITE);
+    }
+
+    {   // velocity
+        vec v = ent[selected_debug_entity_id].velocity;
+        string str = tprint(STR("v: %.1f, %.1f"), v.x, v.y);
+        Gfx_Text_Metrics metric = measure_text(font, str, fh, v2(s, s));
+        int x = px + (w - px - metric.visual_size.x)/2;
+        draw_text(font, str, fh, v2(x, h - (p+fh*s)*o++-metric.visual_size.y), v2(s, s), COLOR_WHITE);
+    }
+    
+    {   // dir
+        vec v = ent[selected_debug_entity_id].dir;
+        string str = tprint(STR("dir: %.1f, %.1f"), v.x, v.y);
+        Gfx_Text_Metrics metric = measure_text(font, str, fh, v2(s, s));
+        int x = px + (w - px - metric.visual_size.x)/2;
+        draw_text(font, str, fh, v2(x, h - (p+fh*s)*o++-metric.visual_size.y), v2(s, s), COLOR_WHITE);
+    }
+    {   // hp
+        int v = ent[selected_debug_entity_id].hp;
+        string str = tprint(STR("hp:%d"), v);
+        Gfx_Text_Metrics metric = measure_text(font, str, fh, v2(s, s));
+        int x = px + (w - px - metric.visual_size.x)/2;
+        draw_text(font, str, fh, v2(x, h - (p+fh*s)*o++-metric.visual_size.y), v2(s, s), COLOR_WHITE);
+    }
+
+    {   // type
+        int v = ent[selected_debug_entity_id].type;
+        string str = tprint(STR("type:%d"), v);
+        Gfx_Text_Metrics metric = measure_text(font, str, fh, v2(s, s));
+        int x = px + (w - px - metric.visual_size.x)/2;
+        draw_text(font, str, fh, v2(x, h - (p+fh*s)*o++-metric.visual_size.y), v2(s, s), COLOR_WHITE);
+    }
+    
+    {   // speed 
+        int v = ent[selected_debug_entity_id].speed;
+        string str = tprint(STR("speed:%d"), v);
+        Gfx_Text_Metrics metric = measure_text(font, str, fh, v2(s, s));
+        int x = px + (w - px - metric.visual_size.x)/2;
+        draw_text(font, str, fh, v2(x, h - (p+fh*s)*o++-metric.visual_size.y), v2(s, s), COLOR_WHITE);
+    }
+    
+    {   // radius
+        int v = ent[selected_debug_entity_id].radius;
+        string str = tprint(STR("radius:%d"), v);
+        Gfx_Text_Metrics metric = measure_text(font, str, fh, v2(s, s));
+        int x = px + (w - px - metric.visual_size.x)/2;
+        draw_text(font, str, fh, v2(x, h - (p+fh*s)*o++-metric.visual_size.y), v2(s, s), COLOR_WHITE);
+    }
+}
+
 static Bool should_draw_info = 0;
 void render_game(void)
 {
@@ -277,6 +369,9 @@ void render_game(void)
     render_bullets();
     render_player();
     render_ui();
+
+    if(program_mode == MODE_debug)
+        render_debug_info();
     
     if(should_draw_info)
         draw_info();

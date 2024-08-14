@@ -55,7 +55,7 @@ typedef struct
     uint32 valid;
     float speed;
     float radius;
-    float r;
+    int32 rot;
     
 } entity;
 
