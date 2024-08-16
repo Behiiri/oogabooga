@@ -1,12 +1,12 @@
 #define TILE_X 32
 #define TILE_Y 32
 
+#include "game_funcs.h"
+
 typedef struct
 {
     int id;
     struct Gfx_Image *tex;
-    Vector2 size;
-    float scale;
     int layer;
 } sprite;
 
@@ -20,17 +20,26 @@ struct
     char *filename;
     int x;
     int y;
-} sprite_files[ET__count] =
+} sprite_info[ET__count] =
 {
 #define X(name, scale, layer, filename, x, y) { name, scale, layer, filename, x, y },
     ENTITY_TYPES_X
 #undef X
 };
 
+vec get_scaled_sprite_size(int type)
+{
+    vec v;
+    v.x = sprite_info[type].x * sprite_info[type].scale;
+    v.y = sprite_info[type].y * sprite_info[type].scale;
+    return v;
+}
+
+
 Gfx_Image* load_sprite_by_id(int id)
 {
-    assert(sprite_files[id].type == id);
-    char * filename = sprite_files[id].filename;
+    assert(sprite_info[id].type == id);
+    char * filename = sprite_info[id].filename;
     Gfx_Image *image = load_image_from_disk(STR(filename), get_heap_allocator());
     assert(image, "load_sprite: Failed loading image %cs", filename);
     return image;
@@ -40,52 +49,53 @@ void render_init(void)
 {
     // TODO just load the sprites that will be used
     int i;
-    for (i=1; i < sizeof(sprite_files)/sizeof(sprite_files[0]); ++i) {
-        int id = i;//sprite_files[i].type;
+    for (i=1; i < sizeof(sprite_info)/sizeof(sprite_info[0]); ++i) {
+        int id = i;
         Gfx_Image *g = load_sprite_by_id(i);
         sprite *s = &sprites[id];
         s->tex = g;
         s->id = id;
-        s->scale = sprite_files[i].scale;
-        s->size = v2(sprite_files[i].x, sprite_files[i].y);
-        if(s->scale != 1.0f)
-            s->size = v2_mulf(s->size, s->scale);
     }
 }
 
-Vector2 rotate_vector(Vector2 v, Vector2 p, float r)
+void draw_outline_rect(Vector2 a, Vector2 b, Vector2 c, Vector2 d, Vector4 color)
 {
-    v.x -= p.x;
-    v.y -= p.y;
-
-    float rx = v.x * cos(r) - v.y * sin(r);
-    float ry = v.x * sin(r) + v.y * cos(r);
-
-    v.x = rx + p.x;
-    v.y = ry + p.y;
-
-    return v;
+    float s = 0.5;
+    draw_line(a, b, s, color);
+    draw_line(b, c, s, color);
+    draw_line(c, d, s, color);
+    draw_line(d, a, s, color);
 }
-
-void draw_box(box b)
+ 
+void draw_aabb(box b)
 {
     Vector2 p0 = v2(b.min.x, b.min.y);
     Vector2 p1 = v2(b.min.x, b.max.y);
     Vector2 p2 = v2(b.max.x, b.max.y);
     Vector2 p3 = v2(b.max.x, b.min.y);
-    float s = 0.5;
-    draw_line(p0, p1, s, (Vector4){0.2, 0.2, 0.2, 1.0});
-    draw_line(p1, p2, s, (Vector4){0.2, 0.2, 0.2, 1.0});
-    draw_line(p2, p3, s, (Vector4){0.2, 0.2, 0.2, 1.0});
-    draw_line(p3, p0, s, (Vector4){0.2, 0.2, 0.2, 1.0});
+    draw_outline_rect(p0, p1, p2, p3, v4(0.2, 0.2, 0.2, 1.0));
 }
 
 void draw_all_entity_aabb()
 {
     int i;
-    for (i=TILE_ENTITY_MAX; i<max_entity_id; ++i)
+    for (i=MONSTER_ENTITY_MIN; i<max_entity_id; ++i)
         if (ent[i].valid)
-            draw_box(ent_to_box(i));
+            draw_aabb(ent_to_box(i));
+}
+
+Vector2 vector2_rotate_u(Vector2 v, Vector2 p, vec u)
+{
+    v.x -= p.x;
+    v.y -= p.y;
+
+    float rx = v.x * u.x - v.y * u.y;
+    float ry = v.x * u.y + v.y * u.x;
+
+    v.x = rx + p.x;
+    v.y = ry + p.y;
+
+    return v;
 }
 
 void draw_obb(obb o)
@@ -94,23 +104,19 @@ void draw_obb(obb o)
     vec u = o.u;
     vec e = o.e;
 
+    o.c = vec_rotate_u(o.c, o.e, o.u);
+    
     float s = 0.5f;
     Vector2 p0 = v2(c.x-e.x, c.y-e.y);
     Vector2 p1 = v2(c.x+e.x, c.y-e.y);
     Vector2 p2 = v2(c.x+e.x, c.y+e.y);
     Vector2 p3 = v2(c.x-e.x, c.y+e.y);
 
-    float r = atan2(u.y, u.x);
-    p0 = rotate_vector(p0, p0, r);
-    p1 = rotate_vector(p1, p0, r);
-    p2 = rotate_vector(p2, p0, r);
-    p3 = rotate_vector(p3, p0, r);
-
-    draw_line(p0, p1, s, (Vector4){0.8, 1.0, 0.0, 1.0});
-    draw_line(p1, p2, s, (Vector4){0.8, 1.0, 0.0, 1.0});
-    draw_line(p2, p3, s, (Vector4){0.8, 1.0, 0.0, 1.0});
-    draw_line(p3, p0, s, (Vector4){0.8, 1.0, 0.0, 1.0});
-
+    p0 = vector2_rotate_u(p0, p0, o.u);
+    p1 = vector2_rotate_u(p1, p0, o.u);
+    p2 = vector2_rotate_u(p2, p0, o.u);
+    p3 = vector2_rotate_u(p3, p0, o.u);
+    draw_outline_rect(p0, p1, p2, p3, v4(1,1,0,1));
     draw_circle(v2(p0.x-0.5f, p0.y-0.5f), v2(1,1), COLOR_RED);
 }
 
@@ -127,8 +133,8 @@ extern vec player_pos;
 void render_player(void)
 {
     Matrix4 m = m4_scalar(1.0);
-    m         = m4_translate(m, v3(player_pos.x, player_pos.y, 0));
-    Vector2 sz = sprites[ET_player].size;
+    m         = m4_translate(m, v3(player_pos.x, player_pos.y, 0));;
+    Vector2 sz = v2(ent[player_id].size.x, ent[player_id].size.y);
     draw_image_xform(sprites[ET_player].tex, m, sz, COLOR_WHITE);
 }
 
@@ -141,7 +147,7 @@ void render_entities(void)
             int type = ent[i].type;
             Gfx_Image *g = sprites[type].tex;
             int layer = sprites[type].layer;
-            Vector2 sz = sprites[type].size;
+            Vector2 sz = v2(ent[i].size.x, ent[i].size.y);
             vec p = ent[i].pos;
             push_z_layer(layer);
             draw_image(g, v2(p.x, p.y), sz, COLOR_WHITE);
@@ -156,12 +162,12 @@ void render_bullets(void)
         if (ent[i].valid) {
             int type = ent[i].type;
             Gfx_Image *g = sprites[type].tex;
-            Vector2 sz = sprites[type].size;
+            Vector2 sz = v2(ent[i].size.x, ent[i].size.y);
             vec p = ent[i].pos;
             // draw_image(g, v2(pos.x, pos.y), sz, COLOR_WHITE);
 
 
-            float radians = atan2(-ent[i].dir.y, ent[i].dir.x);
+            float radians = atan2(-ent[i].u.y, ent[i].u.x);
 
             Matrix4 m = m4_scalar(1.0);
             m         = m4_translate(m, v3(p.x, p.y, 0));
@@ -209,7 +215,7 @@ void render_tiles(void)
         if (ent[i].valid) {
             int type = ent[i].type;
             Gfx_Image *g = sprites[type].tex;
-            Vector2 sz = sprites[type].size;
+            Vector2 sz = v2(ent[i].size.x, ent[i].size.y);
             Vector2 pos = v2(ent[i].pos.x, ent[i].pos.y);
             draw_image(g, pos, sz, COLOR_WHITE);
         }
@@ -266,6 +272,12 @@ void draw_info(void)
     //draw_text_on_screen(0, (p+fh*s)*o++, s, tprint(STR("monster pos:  %f , %f"), ent[BULLET_ENTITY_MAX].pos.x, ent[BULLET_ENTITY_MAX].pos.y));
 }
 
+Vector2 get_sprite_size(int type)
+{
+    return v2(sprite_info[type].x * sprite_info[type].scale,
+              sprite_info[type].y * sprite_info[type].scale);
+}
+
 extern Gfx_Font* font;
 extern int font_height;
 extern int special_ammo;
@@ -284,7 +296,7 @@ void render_ui(void)
 
     { // special ammo
         Gfx_Image *g = sprites[UI_special_ammo].tex;
-        Vector2 sz = sprites[UI_special_ammo].size;
+        Vector2 sz = get_sprite_size(UI_special_ammo);
         Vector2 pos = v2(x, y);
         pos.y -= p*o++;
         draw_image(g, pos, sz, COLOR_WHITE);
@@ -300,7 +312,7 @@ void render_ui(void)
 
     { // fire rate
         Gfx_Image *g = sprites[UI_fire_rate].tex;
-        Vector2 sz = sprites[UI_fire_rate].size;
+        Vector2 sz = get_sprite_size(UI_fire_rate); 
         Vector2 pos = v2(x, y);
         pos.y -= p*o++;
         draw_image(g, pos, sz, COLOR_WHITE);
@@ -325,7 +337,7 @@ void render_ui(void)
 
     { // skull annd kill count
         Gfx_Image *g = sprites[UI_skull].tex;
-        Vector2 sz = sprites[UI_skull].size;
+        Vector2 sz = get_sprite_size(UI_skull);
         int y = 10;
         Vector2 pos = v2(x, y);
         draw_image(g, pos, sz, COLOR_WHITE);
@@ -392,7 +404,7 @@ void render_debug_ui(void)
     }
 
     {   // dir
-        vec v = ent[selected_debug_entity_id].dir;
+        vec v = ent[selected_debug_entity_id].u;
         string str = tprint(STR("dir: %.1f, %.1f"), v.x, v.y);
         Gfx_Text_Metrics metric = measure_text(font, str, fh, v2(s, s));
         int x = px + (w - px - metric.visual_size.x)/2;
@@ -438,14 +450,16 @@ void render_game(void)
     // Game
     //
     render_tiles();
-    render_entities();
-    render_bullets();
-    render_player();
 
     if(show_debug_info) {
         draw_all_entity_aabb();
         draw_all_entity_obb();
     }
+    
+    render_entities();
+    render_bullets();
+    render_player();
+
 
     //
     // UI

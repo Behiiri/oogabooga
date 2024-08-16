@@ -38,6 +38,22 @@ vec vec2(float x, float y)
     return v;
 }
 
+
+vec vec_rotate_u(vec v, vec p, vec u)
+{
+    v.x -= p.x;
+    v.y -= p.y;
+
+    float rx = v.x * u.x - v.y * u.y;
+    float ry = v.x * u.y + v.y * u.x;
+
+    v.x = rx + p.x;
+    v.y = ry + p.y;
+
+    return v;
+}
+
+
 float dot(vec a, vec b) {
     return a.x*b.x + a.y*b.y;
 }
@@ -52,21 +68,22 @@ float distance(vec a, vec b)
 range ent_to_range(entity_id id)
 {
     range range;
-    sprite s = sprites[ent[id].type];
-    range.c = (vec){ ent[id].pos.x + s.size.x/2, ent[id].pos.y + s.size.y/2 };
-    int x = s.size.x/2 * s.scale;
-    int y = s.size.y/2 * s.scale;
-    range.r = (x > y ? x : y);
+    entity en = ent[id];
+    vec s = en.size;
+    range.c = vec2(en.pos.x + s.x/2, en.pos.y + s.y/2);
+    range.r = (s.x > s.y ? s.x : s.y);
     return range;
 }
 
 obb ent_to_obb(entity_id id)
 {
     obb o;
-    sprite s = sprites[ent[id].type];
-    o.c = vec2(ent[id].pos.x + s.size.x/2, ent[id].pos.y + s.size.y/2);
-    o.e = vec2(s.size.x/2, s.size.y/2);
-    o.u = ent[id].dir;
+    vec s = ent[id].size;
+    vec p = ent[id].pos;
+    o.u = ent[id].u;
+    o.c = vec2(p.x + s.x/2, p.y + s.y/2);
+    //o.c = vec_rotate_u(o.c, p, o.u);
+    o.e = vec2(s.x/2, s.y/2);
     return o;
 }
 
@@ -79,22 +96,19 @@ Bool check_range_collision_by_id(entity_id id_a, entity_id id_b)
 {
     range a = ent_to_range(id_a);
     range b = ent_to_range(id_b);
-    return distance(a.c, b.c) <= a.r + b.r;
+    return check_range_collision(a, b);
 }
 
 Bool check_obb_collision(obb* o1, obb* o2) {
-    // vec a1 = {  cos(o1->r), sin(o1->r) };
-    // vec a2 = { -sin(o1->r), cos(o1->r) };
-    // vec a3 = {  cos(o2->r), sin(o2->r) };
-    // vec a4 = { -sin(o2->r), cos(o2->r) };
-
+    o1->c = vec_rotate_u(o1->c, vec2(o1->c.x-o1->e.x, o1->c.y-o1->e.y), o1->u);
+    o2->c = vec_rotate_u(o2->c, vec2(o2->c.x-o2->e.x, o2->c.y-o2->e.y), o2->u);
     // monsters has no rotation so thier dir is (0,0)
     vec a1 = o1->u;
     vec a2 = { -o1->u.y, o1->u.x };
-    vec a3 = { 1, 0 };
-    vec a4 = { 0, 1 };
-    //vec a3 = o2->u;
-    //vec a4 = { -o2->u.y, o2->u.x };
+    // vec a3 = { 1, 0 };
+    // vec a4 = { 0, 1 };
+    vec a3 = o2->u;
+    vec a4 = { -o2->u.y, o2->u.x };
     // edge lengths
     vec l1 = o1->e;
     vec l2 = o2->e;
@@ -294,8 +308,8 @@ void fire_bullet(void)
     float mouse_y = input_frame.mouse_y;
     vec pos = screen_to_world(mouse_x, mouse_y);
 
-    float offset_x = sprites[ET_player].size.x/2;
-    float offset_y = sprites[ET_player].size.y/2;
+    float offset_x = ent[player_id].size.x/2;
+    float offset_y = ent[player_id].size.y/2;
 
     vec dir = {pos.x - (player_pos.x + offset_x), pos.y - (player_pos.y + offset_y)};
     float length = sqrt(dir.x * dir.x + dir.y * dir.y);
@@ -307,7 +321,7 @@ void fire_bullet(void)
     ent[id].velocity.x = velocity.x;
     ent[id].velocity.y = velocity.y;
 
-    ent[id].dir = (vec){unit_dir.x, unit_dir.y};
+    ent[id].u = (vec){unit_dir.x, unit_dir.y};
 }
 
 double bullet_fire_cd = 0.5;
@@ -355,8 +369,8 @@ void update_view(void)
 box ent_to_box(entity_id id)
 {
     entity e = ent[id];
-    float  w = sprites[e.type].size.x;
-    float  h = sprites[e.type].size.y;
+    float  w = e.size.x;
+    float  h = e.size.y;
     return (box) {e.pos, (vec) { e.pos.x+w, e.pos.y+h }};
 }
 
@@ -389,12 +403,8 @@ void update_bullets(void)
 
             for (j=BULLET_ENTITY_MAX; j<=max_monster_id; ++j)
                 if(ent[j].valid && (ent[j].type >= ET__monsters_start || ent[j].type <= ET__monsters_end)) {
-                    //if (check_box_collision_by_id(i, j)) {
                     if (check_range_collision_by_id(i, j))
                     {
-                        // obb o1 = ent_to_obb(i);
-                        // obb o2 = ent_to_obb(j);
-                        // if (check_obb_collision(&o1, &o2))
                         if (check_obb_collision_by_id(i, j))
                         {
                             if(ent[i].type == ET_bullet_tank) {
@@ -522,7 +532,7 @@ Bool is_mouse_over_an_entity(int *ent_id)
         obb a = ent_to_obb(i);
         obb m = { (vec){mouse_x, mouse_y},
             (vec){1, 0},
-            (vec){3, 3}
+            (vec){2, 2}
         };
         if(check_obb_collision(&a, &m))
         {
@@ -773,8 +783,8 @@ void game_init(void)
 
     player_pos = cfg.player_start_pos;
 
-    world_init();
     render_init();
+    world_init();
 
     menu_init();
 }

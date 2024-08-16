@@ -5,6 +5,7 @@
 
 // main.c
 extern vec vec2(float x, float y);
+extern vec vec_rotate_u(vec v, vec p, vec u);
 extern int get_random_int(void);
 extern int get_random_int_range(int min, int max);
 extern vec screen_to_world(float x, float y);
@@ -37,6 +38,7 @@ extern entity_id allocate_bullet(void);
 extern entity_id allocate_monster(void);
 
 // render.c
+extern vec  get_scaled_sprite_size(int type);
 extern void render_game(void);
 extern void render_init(void);
 extern void render_tiles(void);

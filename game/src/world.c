@@ -21,19 +21,100 @@ static void *game_memset(void *data, int c, size_t n)
     return data;
 }
 
+inline void set_entity_size(int id)
+{
+    ent[id].size = get_scaled_sprite_size(ent[id].type);
+}
+
+
+void world_init(void)
+{
+    // player
+    if (program_mode == MODE_game) {
+        player_id = 0;
+        ent[player_id].valid = 1;
+        ent[player_id].pos.x = 0;
+        ent[player_id].pos.y = 0;
+        ent[player_id].type = ET_player;
+        set_entity_size(player_id);
+    }
+
+    // ground tiles
+    int sz_x = TILE_SIZE;
+    int sz_y = TILE_SIZE;
+    int i, j;
+    for (i = 0; i<50; ++i)
+        for (j = 0; j<50;++j) {
+            vec pos = {i * sz_x, j * sz_y};
+            int id = create_tile(ET_ground3, pos);
+        }
+
+    // monsters
+#if 1
+    for (i = 0; i<100; ++i) {
+        int type = get_random_int_range(ET__monsters_start, ET__monsters_end);
+        create_monster_in_random_side(type, cfg.player_start_pos);
+    }
+#else
+    int type = ET_robot;
+    create_monster_in_random_side(type, cfg.player_start_pos);
+#endif
+}
+
+int world_to_tile_pos(float world_pos)
+{
+    return world_pos / TILE_SIZE;
+}
+
+int create_entity(int type, vec pos)
+{
+    entity_id id = allocate_entity();
+    game_memset(&ent[id], 0, sizeof(ent[id]));
+    ent[id].pos = pos;
+    ent[id].valid = 1;
+    ent[id].type = type;
+    set_entity_size(id);
+    return id;
+}
+
+int create_tile(int type, vec pos)
+{
+    entity_id id = allocate_tile();
+    game_memset(&ent[id], 0, sizeof(ent[id]));
+    ent[id].pos = pos;
+    ent[id].valid = 1;
+    ent[id].type = type;
+    set_entity_size(id);
+    return id;
+}
+
+
+int create_bullet(int type, vec pos)
+{
+    entity_id id = allocate_bullet();
+    game_memset(&ent[id], 0, sizeof(ent[id]));
+    ent[id].pos = pos;
+    ent[id].valid = 1;
+    ent[id].type = type;
+    set_entity_size(id);
+    return id;
+}
+
+
 void create_monster(int type, vec pos)
 {
     entity_id id = allocate_monster();
     game_memset(&ent[id], 0, sizeof(ent[id]));
 
-    monster mi = get_monster_info(type);
-    ent[id].hp = mi.hp;
-    ent[id].speed = mi.speed;
+    monster mi     = get_monster_info(type);
+    ent[id].hp     = mi.hp;
+    ent[id].speed  = mi.speed;
     ent[id].radius = 30;
-    ent[id].dir = vec2(1,0);
-    ent[id].pos   = pos;
-    ent[id].type  = type;
-    ent[id].valid = 1;
+    ent[id].u      = vec2(1,0);
+    ent[id].pos    = pos;
+    ent[id].type   = type;
+    ent[id].valid  = 1;
+    set_entity_size(id);
 }
 
 void create_monster_in_random_side(int type, vec origin)
@@ -52,73 +133,4 @@ void create_monster_in_distance(int type, vec origin, int dist_min, int dist_max
     vec pos = {x, y};
 
     create_monster(type, pos);
-}
-
-void world_init(void)
-{
-    // player
-    if (program_mode == MODE_game) {
-        player_id = 0;
-        ent[player_id].valid = 1;
-        ent[player_id].pos.x = 0;
-        ent[player_id].pos.y = 0;
-        ent[player_id].type = ET_player;
-    }
-
-    // ground tiles
-    int sz_x = TILE_SIZE;
-    int sz_y = TILE_SIZE;
-    int i, j;
-    for (i = 0; i<50; ++i)
-        for (j = 0; j<50;++j) {
-            vec pos = {i * sz_x, j * sz_y};
-            int id = create_tile(ET_ground3, pos);
-        }
-
-    // monsters
-    for (i = 0; i<25; ++i) {
-        int type = get_random_int_range(ET__monsters_start, ET__monsters_end);
-        create_monster_in_random_side(type, cfg.player_start_pos);
-    }
-
-}
-
-int create_entity(int type, vec pos)
-{
-    entity_id id = allocate_entity();
-    game_memset(&ent[id], 0, sizeof(ent[id]));
-    ent[id].pos = pos;
-    ent[id].valid = 1;
-    ent[id].type = type;
-
-    return id;
-}
-
-int create_tile(int type, vec pos)
-{
-    entity_id id = allocate_tile();
-    game_memset(&ent[id], 0, sizeof(ent[id]));
-    ent[id].pos = pos;
-    ent[id].valid = 1;
-    ent[id].type = type;
-
-    return id;
-}
-
-
-int create_bullet(int type, vec pos)
-{
-    //assert(type >= ET__bullets_start && type <= ET__bullets_end);
-    entity_id id = allocate_bullet();
-    game_memset(&ent[id], 0, sizeof(ent[id]));
-    ent[id].pos = pos;
-    ent[id].valid = 1;
-    ent[id].type = type;
-
-    return id;
-}
-
-int world_to_tile_pos(float world_pos)
-{
-    return world_pos / TILE_SIZE;
 }

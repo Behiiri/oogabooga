@@ -11,7 +11,8 @@
 ** TODO add win and lose conditions
 ** TODO increase monster HP and show damage numbers
 ** DONE add debug mode to the game
-** TODO add entity data view for debug mode
+** DONE add entity data view for debug mode
+** TODO add collision for monsters and Implement better movement for them
 
 * Bounties
 ** INVALID after using special bullet, the range change gets applied to normal bullets too.
@@ -29,7 +30,10 @@ so sometimes the repositioning can happen more then 10 times for a monster
 ** FIXED tank bullet can miss on obb, even when two sprites clearly overlap
 I forgot to apply scale for sprites, now it works OK.
 ** INVALID sometimes fire rate pickup wraps the fire rate value (sets it to 2 or 4?)
-the whole fire rate logic is wanky and I think it needs reimplementation in a robust way
+the whole fire rate logic is wacky and I think it needs reimplementation in a robust way
 actully changing the weapon reset the fire rate to 2... design might change, so I'm going to leave it as is.
 ** TODO the tank bullets travels at speed of the selected gun
 I just need to add a seperate data structure and logic for all the special bullets and ablities
+** TODO bullets position is not centered
+when firing to the right (u = 1,0) the bullets pos.y is same as the mause_y, I need to subtract half the size
+of sprite from it's position, but I'm not sure how this will affect rotation and collisions
