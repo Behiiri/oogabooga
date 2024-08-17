@@ -6,7 +6,7 @@
 typedef struct
 {
     int id;
-    struct Gfx_Image *tex;
+    Gfx_Image *tex;
     int layer;
 } sprite;
 
@@ -26,6 +26,13 @@ struct
     ENTITY_TYPES_X
 #undef X
 };
+
+Vector2 get_scaled_sprite_size_v2(int type)
+{
+    return v2(sprite_info[type].x * sprite_info[type].scale,
+              sprite_info[type].y * sprite_info[type].scale);
+}
+
 
 vec get_scaled_sprite_size(int type)
 {
@@ -84,7 +91,7 @@ void draw_all_entity_aabb()
             draw_aabb(ent_to_box(i));
 }
 
-Vector2 vector2_rotate_u(Vector2 v, Vector2 p, vec u)
+Vector2 v2_rotate_u(Vector2 v, Vector2 p, vec u)
 {
     v.x -= p.x;
     v.y -= p.y;
@@ -112,10 +119,10 @@ void draw_obb(obb o)
     Vector2 p2 = v2(c.x+e.x, c.y+e.y);
     Vector2 p3 = v2(c.x-e.x, c.y+e.y);
 
-    p0 = vector2_rotate_u(p0, p0, o.u);
-    p1 = vector2_rotate_u(p1, p0, o.u);
-    p2 = vector2_rotate_u(p2, p0, o.u);
-    p3 = vector2_rotate_u(p3, p0, o.u);
+    p0 = v2_rotate_u(p0, p0, o.u);
+    p1 = v2_rotate_u(p1, p0, o.u);
+    p2 = v2_rotate_u(p2, p0, o.u);
+    p3 = v2_rotate_u(p3, p0, o.u);
     draw_outline_rect(p0, p1, p2, p3, v4(1,1,0,1));
     draw_circle(v2(p0.x-0.5f, p0.y-0.5f), v2(1,1), COLOR_RED);
 }
@@ -272,12 +279,6 @@ void draw_info(void)
     //draw_text_on_screen(0, (p+fh*s)*o++, s, tprint(STR("monster pos:  %f , %f"), ent[BULLET_ENTITY_MAX].pos.x, ent[BULLET_ENTITY_MAX].pos.y));
 }
 
-Vector2 get_sprite_size(int type)
-{
-    return v2(sprite_info[type].x * sprite_info[type].scale,
-              sprite_info[type].y * sprite_info[type].scale);
-}
-
 extern Gfx_Font* font;
 extern int font_height;
 extern int special_ammo;
@@ -296,7 +297,7 @@ void render_ui(void)
 
     { // special ammo
         Gfx_Image *g = sprites[UI_special_ammo].tex;
-        Vector2 sz = get_sprite_size(UI_special_ammo);
+        Vector2 sz = get_scaled_sprite_size_v2(UI_special_ammo);
         Vector2 pos = v2(x, y);
         pos.y -= p*o++;
         draw_image(g, pos, sz, COLOR_WHITE);
@@ -312,7 +313,7 @@ void render_ui(void)
 
     { // fire rate
         Gfx_Image *g = sprites[UI_fire_rate].tex;
-        Vector2 sz = get_sprite_size(UI_fire_rate); 
+        Vector2 sz = get_scaled_sprite_size_v2(UI_fire_rate); 
         Vector2 pos = v2(x, y);
         pos.y -= p*o++;
         draw_image(g, pos, sz, COLOR_WHITE);
@@ -337,7 +338,7 @@ void render_ui(void)
 
     { // skull annd kill count
         Gfx_Image *g = sprites[UI_skull].tex;
-        Vector2 sz = get_sprite_size(UI_skull);
+        Vector2 sz = get_scaled_sprite_size_v2(UI_skull);
         int y = 10;
         Vector2 pos = v2(x, y);
         draw_image(g, pos, sz, COLOR_WHITE);
@@ -443,6 +444,25 @@ void render_debug_ui(void)
     }
 }
 
+extern game_text damage_texts[];
+void render_game_texts(void)
+{
+    int fh = 48;
+    float s = 0.15f;
+    int i;
+    for(i=0; i<MAX_DAMAGE_TEXTS; ++i)
+    {
+        if(damage_texts[i].valid) {
+            game_text *t = &damage_texts[i];
+            string str = tprint(STR("%d"), t->dmg);
+            Vector4 color = COLOR_WHITE;
+            if(t->color == 1) color = v4(1,1,0,1);
+            if(t->color == 2) color = COLOR_RED;
+            draw_text(font, str, fh, v2(t->pos.x, t->pos.y), v2(s, s), color);
+        }
+    }
+}
+
 static Bool should_draw_info = 0;
 void render_game(void)
 {
@@ -459,8 +479,9 @@ void render_game(void)
     render_entities();
     render_bullets();
     render_player();
-
-
+    
+    render_game_texts();
+    
     //
     // UI
     //

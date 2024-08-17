@@ -50,7 +50,7 @@ typedef struct
     vec pos;
     vec size;
     vec velocity;
-    vec dir;
+    vec u;
     int hp;
     int type;
     uint32 valid;
@@ -81,7 +81,7 @@ enum
     X(ET_bullet03,       0.4f,   11,   "../dat/art/bullet03.png",         5,  5) \
     X(ET_bullet04,       0.6f,   11,   "../dat/art/bullet04.png",         5,  5) \
     X(ET_bullet05,       0.6f,   11,   "../dat/art/bullet05.png",         6,  6) \
-    X(ET_bullet_tank,    1.5f,   11,   "../dat/art/bullet_tank.png",     12,  5) \
+    X(ET_bullet_tank,    1.2f,   11,   "../dat/art/bullet_tank.png",     12,  5) \
     X(ET_mummy,          1.0f,   31,   "../dat/art/mummy.png",           10, 13) \
     X(ET_spider,         1.0f,   31,   "../dat/art/spider.png",          16, 15) \
     X(ET_alien,          1.0f,   31,   "../dat/art/alien.png",            9, 16) \
@@ -159,6 +159,8 @@ typedef struct
     float bullet_speed; // ??
     int fire_mode;
     int fire_rate;
+    int min_damage;
+    int max_damage;
 } weapon;
 
 extern weapon cur_weapon;
@@ -233,5 +235,19 @@ typedef struct {
     vec   e;
 
 } obb;
+
+typedef struct
+{
+    int valid;
+    vec pos;
+    int dmg;
+    int color;
+    double create_time;
+    double duration;    
+} game_text;
+
+#define MAX_DAMAGE_TEXTS 256
+extern int max_damage_text_id;
+extern game_text damage_texts[MAX_DAMAGE_TEXTS];
 
 #endif

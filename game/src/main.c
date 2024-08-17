@@ -306,21 +306,19 @@ void fire_bullet(void)
 {
     float mouse_x = input_frame.mouse_x;
     float mouse_y = input_frame.mouse_y;
-    vec pos = screen_to_world(mouse_x, mouse_y);
+    vec mouse_pos = screen_to_world(mouse_x, mouse_y);
 
     float offset_x = ent[player_id].size.x/2;
     float offset_y = ent[player_id].size.y/2;
 
-    vec dir = {pos.x - (player_pos.x + offset_x), pos.y - (player_pos.y + offset_y)};
+    vec dir = {mouse_pos.x - (player_pos.x + offset_x), mouse_pos.y - (player_pos.y + offset_y)};
     float length = sqrt(dir.x * dir.x + dir.y * dir.y);
     if (length == 0) length = 1;
     vec unit_dir = {dir.x / length, dir.y / length};
     vec velocity = {unit_dir.x * cur_weapon.bullet_speed, unit_dir.y * cur_weapon.bullet_speed};
 
     int id = create_bullet(cur_weapon.bullet_type, (vec){player_pos.x + offset_x, player_pos.y + offset_y});
-    ent[id].velocity.x = velocity.x;
-    ent[id].velocity.y = velocity.y;
-
+    ent[id].velocity = velocity;
     ent[id].u = (vec){unit_dir.x, unit_dir.y};
 }
 
@@ -408,9 +406,15 @@ void update_bullets(void)
                         if (check_obb_collision_by_id(i, j))
                         {
                             if(ent[i].type == ET_bullet_tank) {
-                                ent[j].hp -= 5;
+                                int dmg = 99;
+                                ent[j].hp -= dmg;
+                                add_game_text(ent[i].pos, dmg, 0.33, 2);
                             } else {
-                                ent[j].hp--;
+                                int dmg = get_random_int_range(cur_weapon.min_damage, cur_weapon.max_damage);
+                                int color_id = 0;
+                                if(dmg > 25) color_id = 1;
+                                add_game_text(ent[i].pos, dmg, 0.25, color_id);
+                                ent[j].hp -= dmg;
                                 ent[i].valid = 0;
                             }
 
@@ -748,6 +752,7 @@ void gameloop(void)
         ent[0].pos.y = player_pos.y;
 
         update_entities();
+        process_tick_raw(dt); // @TODO move other update related things to this
         render_game();
     } else if(program_mode == MODE_menu)
     {
@@ -759,6 +764,7 @@ void gameloop(void)
         dt = 0;
         update_view();
         process_debug_input();
+        process_tick_raw(dt);
         render_game();
     }
 }

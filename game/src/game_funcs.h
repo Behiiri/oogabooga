@@ -29,7 +29,9 @@ extern void create_monster_in_random_side(int type, vec origin);
 extern int  create_bullet(int type, vec pos);
 extern entity_id create_entity(int type, vec pos);
 extern entity_id create_tile(int type, vec pos);
-
+extern void process_tick_raw(float dt);
+extern void add_game_text(vec pos, int dmg, double duration, int color);
+    
 // entity.c
 extern entity_id allocate_entity(void);
 extern entity_id allocate_player(void);

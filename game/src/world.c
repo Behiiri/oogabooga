@@ -16,7 +16,7 @@ static void *game_memset(void *data, int c, size_t n)
     uint8 val = (uint8)c;
 
     int i;
-    for(i=0; i<n; ++i)
+    for (i=0; i<n; ++i)
         d[i] = val;
     return data;
 }
@@ -133,4 +133,39 @@ void create_monster_in_distance(int type, vec origin, int dist_min, int dist_max
     vec pos = {x, y};
 
     create_monster(type, pos);
+}
+
+game_text damage_texts[MAX_DAMAGE_TEXTS];
+int max_damage_text_id;
+void add_game_text(vec pos, int dmg, double duration, int color_id)
+{
+    int i;
+    for (i=0; i<MAX_DAMAGE_TEXTS; ++i)
+        if (!damage_texts[i].valid) {
+            if (i >= max_damage_text_id)
+                max_damage_text_id = i+1;
+            game_text *t = &damage_texts[i];
+            t->valid = True;
+            t->pos = pos;
+            t->dmg = dmg;
+            t->color = color_id;
+            t->create_time = world_timer;
+            t->duration = duration;
+            return;
+        }
+ 
+}
+
+void process_tick_raw(float dt)
+{
+    int i;
+    for (i=0; i<MAX_DAMAGE_TEXTS; ++i) {
+        if(damage_texts[i].valid) {
+            game_text *t = &damage_texts[i];
+            if(world_timer - t->create_time > t->duration) {
+                t->valid = 0; continue;
+            }
+            t->pos.y += 50*dt;
+        }
+    }
 }
