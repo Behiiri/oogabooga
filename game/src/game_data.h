@@ -81,7 +81,7 @@ enum
     X(ET_bullet03,       0.4f,   11,   "../dat/art/bullet03.png",         5,  5) \
     X(ET_bullet04,       0.6f,   11,   "../dat/art/bullet04.png",         5,  5) \
     X(ET_bullet05,       0.6f,   11,   "../dat/art/bullet05.png",         6,  6) \
-    X(ET_bullet_tank,    1.2f,   11,   "../dat/art/bullet_tank.png",     12,  5) \
+    X(ET_bullet_tank,    1.0f,   11,   "../dat/art/bullet_tank.png",     12,  5) \
     X(ET_mummy,          1.0f,   31,   "../dat/art/mummy.png",           10, 13) \
     X(ET_spider,         1.0f,   31,   "../dat/art/spider.png",          16, 15) \
     X(ET_alien,          1.0f,   31,   "../dat/art/alien.png",            9, 16) \
@@ -94,7 +94,10 @@ enum
     X(ET_gem_green,      0.5f,    1,   "../dat/art/gem_green.png",       14, 14) \
     X(UI_special_ammo,   1.0f,    1,   "../dat/art/ui_special_ammo.png", 16, 16) \
     X(UI_fire_rate,      1.0f,    1,   "../dat/art/ui_fire_rate.png",    16, 16) \
-    X(UI_skull,          0.625f,  1,   "../dat/art/ui_skull.png",        16, 16)
+    X(UI_skull,          0.625f,  1,   "../dat/art/ui_skull.png",        16, 16) \
+    X(UI_WT_pistol,      1.5f,    1,   "../dat/art/ui_wt_pistol.png",    16, 12) \
+    X(UI_WT_auto,        1.5f,    1,   "../dat/art/ui_wt_auto.png",      16, 12) \
+    X(UI_WT_shotgun,     1.5f,    1,   "../dat/art/ui_wt_shotgun.png",   16, 12)
 
 enum
 {
@@ -140,25 +143,29 @@ enum // fire mode
     FM_five_bullets,
     FM_cycle,
     FM_burst,
-    FM_Spread
+    FM_spread
 };
 
 enum // weapon types
 {
     WT_pistol,
-    WT_secondary,
-    WT_SpreadGun,
+    //WT_secondary,
+    //WT_SpreadGun,
+    WT_auto,
+    WT_shotgun,
     WT__count
 };
 
 typedef struct
 {
     int type;
+    int icon;
     int bullet_type;
     int bullets_per_shot;
     float bullet_speed; // ??
     int fire_mode;
     int fire_rate;
+    int fire_range;
     int min_damage;
     int max_damage;
 } weapon;

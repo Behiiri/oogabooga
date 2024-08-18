@@ -9,10 +9,11 @@
 ** TODO add weapon pickups
 ** TODO add skills
 ** TODO add win and lose conditions
-** TODO increase monster HP and show damage numbers
+** DONE increase monster HP and show damage numbers
 ** DONE add debug mode to the game
 ** DONE add entity data view for debug mode
 ** TODO add collision for monsters and Implement better movement for them
+** DONE add icon for current weapon
 
 * Bounties
 ** INVALID after using special bullet, the range change gets applied to normal bullets too.

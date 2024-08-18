@@ -165,7 +165,7 @@ void render_entities(void)
 void render_bullets(void)
 {
     int i;
-    for (i=TILE_ENTITY_MAX; i<max_bullet_id; ++i)
+    for (i=BULLET_ENTITY_MIN; i<max_bullet_id; ++i)
         if (ent[i].valid) {
             int type = ent[i].type;
             Gfx_Image *g = sprites[type].tex;
@@ -284,9 +284,11 @@ extern int font_height;
 extern int special_ammo;
 void render_ui(void)
 {
+    int h = 180;
+    int w = 320;
     draw_frame.view = m4_make_scale(v3(1.0, 1.0, 1.0));
-    draw_frame.projection = m4_make_orthographic_projection(0, 320,
-                                                            0, 180, -1, 10);
+    draw_frame.projection = m4_make_orthographic_projection(0, w,
+                                                            0, h, -1, 10);
     float scale = 0.2f;
 
     int fh = font_height;
@@ -336,17 +338,36 @@ void render_ui(void)
         draw_text_on_screen(x, y, scale, str);
     }
 
-    { // skull annd kill count
+
+    { // Weapon Icon and ammo count
+        
+        Gfx_Image *g = sprites[cur_weapon.icon].tex;
+        Vector2 sz = get_scaled_sprite_size_v2(cur_weapon.icon);
+        int y = 10;
+        Vector2 pos = v2(x, y);
+        draw_image(g, pos, sz, COLOR_WHITE);
+
+        // TODO show ammo count?
+        // string str = tprint(STR("%d"), kill_count);
+        // // Gfx_Text_Metrics str_metrics = measure_text(font, str, fh, v2(scale, scale));
+
+        // pos.y = pos.y + sz.y/3;
+        // pos.x = pos.x + sz.x + 3;
+        // draw_text(font, str, fh, pos, v2(scale, scale), COLOR_WHITE);
+    }
+    
+    { // skull and kill count
         Gfx_Image *g = sprites[UI_skull].tex;
         Vector2 sz = get_scaled_sprite_size_v2(UI_skull);
-        int y = 10;
+        int y = h - sz.y - 5;
+        int x = w - sz.x * 4;
         Vector2 pos = v2(x, y);
         draw_image(g, pos, sz, COLOR_WHITE);
 
         string str = tprint(STR("%d"), kill_count);
         // Gfx_Text_Metrics str_metrics = measure_text(font, str, fh, v2(scale, scale));
 
-        pos.y = pos.y + sz.y/3;
+        pos.y = (pos.y + sz.y/3);
         pos.x = pos.x + sz.x + 3;
         draw_text(font, str, fh, pos, v2(scale, scale), COLOR_WHITE);
     }
@@ -450,7 +471,7 @@ void render_game_texts(void)
     int fh = 48;
     float s = 0.15f;
     int i;
-    for(i=0; i<MAX_DAMAGE_TEXTS; ++i)
+    for(i=0; i<max_damage_text_id; ++i)
     {
         if(damage_texts[i].valid) {
             game_text *t = &damage_texts[i];

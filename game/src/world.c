@@ -159,7 +159,7 @@ void add_game_text(vec pos, int dmg, double duration, int color_id)
 void process_tick_raw(float dt)
 {
     int i;
-    for (i=0; i<MAX_DAMAGE_TEXTS; ++i) {
+    for (i=0; i<max_damage_text_id; ++i) {
         if(damage_texts[i].valid) {
             game_text *t = &damage_texts[i];
             if(world_timer - t->create_time > t->duration) {
