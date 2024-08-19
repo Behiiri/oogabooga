@@ -118,7 +118,7 @@
 
 #define OGB_VERSION_MAJOR 0
 #define OGB_VERSION_MINOR 1
-#define OGB_VERSION_PATCH 3
+#define OGB_VERSION_PATCH 4
 
 #define OGB_VERSION (OGB_VERSION_MAJOR*1000000+OGB_VERSION_MINOR*1000+OGB_VERSION_PATCH)
 
@@ -229,7 +229,7 @@ typedef u8 bool;
 #ifdef _WIN32
 	#define COBJMACROS
 	#undef noreturn
-	#include <Windows.h>
+	#include <windows.h>
     #if CONFIGURATION == DEBUG
     	#include <dbghelp.h>
     #endif
@@ -286,7 +286,6 @@ typedef u8 bool;
 #include "hash.c"
 #include "path_utils.c"
 #include "linmath.c"
-#include "range.c"
 #include "utility.c"
 
 #include "hash_table.c"

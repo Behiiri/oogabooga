@@ -43,6 +43,14 @@ typedef union Vector4 {
 inline Vector4 v4(float32 x, float32 y, float32 z, float32 w) { return (Vector4){x, y, z, w}; }
 #define v4_expand(v) (v).x, (v).y, (v).z, (v).w
 
+const Vector2 v2_one = {1, 1};
+const Vector3 v3_one = {1, 1, 1};
+const Vector4 v4_one = {1, 1, 1, 1};
+
+const Vector2 v2_zero = {0, 0};
+const Vector3 v3_zero = {0, 0, 0};
+const Vector4 v4_zero = {0, 0, 0, 0};
+
 inline Vector2 v2_add(Vector2 a, Vector2 b) {
 	return v2(a.x+b.x, a.y+b.y);
 }
@@ -181,15 +189,11 @@ Vector2 v2_rotate_point_around_pivot(Vector2 point, Vector2 pivot, float32 rotat
     float32 s = sin(rotation_radians);
     float32 c = cos(rotation_radians);
 
-    point.x -= pivot.x;
-    point.y -= pivot.y;
     point = v2_sub(point, pivot);
 
     float32 x_new = point.x * c - point.y * s;
     float32 y_new = point.x * s + point.y * c;
 
-    point.x = x_new + pivot.x;
-    point.y = y_new + pivot.y;
     point = v2_add(v2(x_new, y_new), pivot);
 
     return point;
