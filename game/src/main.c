@@ -225,7 +225,7 @@ Bool move_towards(vec* v, vec d, float dt, float t) {
 vec screen_to_world(float x, float y)
 {
     Matrix4 proj = draw_frame.projection;
-    Matrix4 view = draw_frame.view;
+    Matrix4 view = draw_frame.camera_xform;
     float w = window.width;
     float h = window.height;
 
@@ -410,9 +410,9 @@ void update_view(void)
     float scale_y = SCREEN_Y/window.height;
     float scale = scale_x > scale_y ? scale_x : scale_y;
 
-    draw_frame.view = m4_make_scale(v3(1.0, 1.0, 1.0));
-    draw_frame.view = m4_mul(draw_frame.view, m4_make_translation(v3(camera_pos.x, camera_pos.y, 0)));
-    draw_frame.view = m4_mul(draw_frame.view, m4_make_scale(v3((scale)/cfg.zoom, (scale)/cfg.zoom, 1.0f)));
+    draw_frame.camera_xform = m4_make_scale(v3(1.0, 1.0, 1.0));
+    draw_frame.camera_xform = m4_mul(draw_frame.camera_xform, m4_make_translation(v3(camera_pos.x, camera_pos.y, 0)));
+    draw_frame.camera_xform = m4_mul(draw_frame.camera_xform, m4_make_scale(v3((scale)/cfg.zoom, (scale)/cfg.zoom, 1.0f)));
 }
 
 box ent_to_box(entity_id id)
@@ -860,13 +860,13 @@ int entry(int argc, char **argv)
     while (!window.should_close) {
         reset_temporary_storage();
         os_update();
-        double now = os_get_current_time_in_seconds();
+        double now = os_get_elapsed_seconds();
 
         gameloop();
 
         gfx_update();
 
-        dt = os_get_current_time_in_seconds() - now;
+        dt = os_get_elapsed_seconds() - now;
     }
 
     return 0;

@@ -286,7 +286,7 @@ void render_ui(void)
 {
     int h = 180;
     int w = 320;
-    draw_frame.view = m4_make_scale(v3(1.0, 1.0, 1.0));
+    draw_frame.camera_xform = m4_make_scale(v3(1.0, 1.0, 1.0));
     draw_frame.projection = m4_make_orthographic_projection(0, w,
                                                             0, h, -1, 10);
     float scale = 0.2f;
@@ -379,7 +379,7 @@ void render_debug_ui(void)
     int w = 320;
     int h = 180;
 
-    draw_frame.view = m4_make_scale(v3(1.0, 1.0, 1.0));
+    draw_frame.camera_xform = m4_make_scale(v3(1.0, 1.0, 1.0));
     draw_frame.projection = m4_make_orthographic_projection(0, w,
                                                             0, h, -1, 10);
 
