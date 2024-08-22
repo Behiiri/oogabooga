@@ -211,7 +211,7 @@ static void draw_menu_choices(void)
     }
 }
 
-static  void draw_menu_view(void)
+static void draw_menu_view(void)
 {
     draw_frame.camera_xform = m4_make_scale(v3(1.0, 1.0, 1.0));    
     draw_frame.projection = m4_make_orthographic_projection(0, menu_screen_x,

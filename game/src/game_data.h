@@ -57,7 +57,6 @@ typedef struct
     float speed;
     float radius;
     int32 rot;
-
 } entity;
 
 enum
@@ -81,6 +80,8 @@ enum
     X(ET_bullet03,       0.4f,   11,   "../dat/art/bullet03.png",         5,  5) \
     X(ET_bullet04,       0.6f,   11,   "../dat/art/bullet04.png",         5,  5) \
     X(ET_bullet05,       0.6f,   11,   "../dat/art/bullet05.png",         6,  6) \
+    X(ET_bullet_lazer,   0.6f,   11,   "../dat/art/bullet_lazer.png",     8,  2) \
+    X(ET_bullet_ion,     0.6f,   11,   "../dat/art/bullet_ion.png",      16,  2) \
     X(ET_bullet_tank,    1.0f,   11,   "../dat/art/bullet_tank.png",     12,  5) \
     X(ET_mummy,          1.0f,   31,   "../dat/art/mummy.png",           10, 13) \
     X(ET_spider,         1.0f,   31,   "../dat/art/spider.png",          16, 15) \
@@ -115,7 +116,6 @@ enum
     ET__monsters_end   = ET_robot
 };
 
-
 #define BULLETS_COUNT (ET__bullets_end  - ET__bullets_start  + 1)
 #define MONSTER_COUNT (ET__monsters_end - ET__monsters_start + 1)
 
@@ -149,10 +149,10 @@ enum // fire mode
 enum // weapon types
 {
     WT_pistol,
-    //WT_secondary,
-    //WT_SpreadGun,
     WT_auto,
     WT_shotgun,
+    WT_lazer,
+    WT_ion,
     WT__count
 };
 
@@ -183,9 +183,9 @@ typedef struct
 extern config cfg;
 
 #define TILE_ENTITY_MAX    4096
-#define BULLET_ENTITY_MAX  4352
-#define MONSTER_ENTITY_MAX 8192
-#define MAX_ENTITIES       65536
+#define BULLET_ENTITY_MAX  (TILE_ENTITY_MAX + 2048)
+#define MONSTER_ENTITY_MAX (BULLET_ENTITY_MAX + 8192)
+#define MAX_ENTITIES       (MONSTER_ENTITY_MAX + 8192)
 
 #define TILE_ENTITY_MIN    1
 #define BULLET_ENTITY_MIN  TILE_ENTITY_MAX
@@ -225,7 +225,8 @@ enum
     CH_002,
 };
 
-typedef struct {
+typedef struct
+{
     vec min;
     vec max;
 } box;
@@ -236,11 +237,11 @@ typedef struct
     float r;
 } range;
 
-typedef struct {
+typedef struct
+{
     vec   c;
     vec   u;
     vec   e;
-
 } obb;
 
 typedef struct

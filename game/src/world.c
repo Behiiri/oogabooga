@@ -51,7 +51,7 @@ void world_init(void)
 
     // monsters
 #if 1
-    for (i = 0; i<100; ++i) {
+    for (i = 0; i<150; ++i) {
         int type = get_random_int_range(ET__monsters_start, ET__monsters_end);
         create_monster_in_random_side(type, cfg.player_start_pos);
     }

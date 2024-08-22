@@ -50,4 +50,7 @@ extern void toggle_menu(void);
 extern void draw_menu_view(void);
 extern void process_menu_input(void);
 extern void menu_init(void);
+
+#define arrlen(arr) (sizeof(arr) / sizeof((arr)[0]))
+
 #endif

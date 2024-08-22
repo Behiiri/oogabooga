@@ -338,11 +338,42 @@ void fire_bullet(void)
         if (length == 0) length = 1;
         vec unit_dir = {dir.x / length, dir.y / length};
 
-        // @TODO calc the right amount based on bullets_per_shot
-        vec bullet_pos = vec2(player_pos.x + offset_x, player_pos.y + offset_y);
-        int id = create_bullet(cur_weapon.bullet_type, bullet_pos);
-        ent[id].velocity = vec2(unit_dir.x * cur_weapon.bullet_speed, unit_dir.y * cur_weapon.bullet_speed);
-        ent[id].u = unit_dir;
+        int id;
+        vec bullet_pos;
+
+        if(cur_weapon.bullets_per_shot % 2) // odds
+        {
+            bullet_pos = vec2(player_pos.x + offset_x, player_pos.y + offset_y);
+            id = create_bullet(cur_weapon.bullet_type, bullet_pos);
+            ent[id].velocity = vec2(unit_dir.x * cur_weapon.bullet_speed, unit_dir.y * cur_weapon.bullet_speed);
+            ent[id].u = unit_dir;
+        } else if(cur_weapon.bullets_per_shot >= 2)
+        {
+            bullet_pos = vec2(player_pos.x + offset_x, player_pos.y + offset_y);
+            vec u = vec_rotate(unit_dir, M_PI/24);
+            id = create_bullet(cur_weapon.bullet_type, bullet_pos);
+            ent[id].velocity = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
+            ent[id].u = u;
+            
+            u = vec_rotate(unit_dir, -M_PI/24);
+            id = create_bullet(cur_weapon.bullet_type, bullet_pos);
+            ent[id].velocity = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
+            ent[id].u = u;
+
+            if(cur_weapon.bullets_per_shot >= 4) {
+                vec u = vec_rotate(unit_dir, M_PI/12);
+                id = create_bullet(cur_weapon.bullet_type, bullet_pos);
+                ent[id].velocity = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
+                ent[id].u = u;
+
+                u = vec_rotate(unit_dir, -M_PI/12);
+                id = create_bullet(cur_weapon.bullet_type, bullet_pos);
+                ent[id].velocity = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
+                ent[id].u = u;
+            }
+
+            return;
+        }
 
         if(cur_weapon.bullets_per_shot >= 3) {
             vec u = vec_rotate(unit_dir, M_PI/12);
@@ -369,6 +400,67 @@ void fire_bullet(void)
         }
         
         return;
+    }
+
+    if(cur_weapon.fire_mode == FM_cycle) {
+        vec dir = {mouse_pos.x - (player_pos.x + offset_x), mouse_pos.y - (player_pos.y + offset_y)};
+        float length = sqrt(dir.x * dir.x + dir.y * dir.y);
+        if (length == 0) length = 1;
+        vec unit_dir = {dir.x / length, dir.y / length};
+
+        int id;
+        vec bullet_pos = vec2(player_pos.x + offset_x, player_pos.y + offset_y);
+        vec u = unit_dir;
+        
+        id = create_bullet(cur_weapon.bullet_type, bullet_pos);
+        ent[id].velocity = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
+        ent[id].u = u;
+
+        if(cur_weapon.bullets_per_shot >= 4) {
+     
+            u = vec2(-unit_dir.x, -unit_dir.y); // back
+            id = create_bullet(cur_weapon.bullet_type, bullet_pos);
+            ent[id].velocity = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
+            ent[id].u = u;
+
+            u = vec2(unit_dir.y, -unit_dir.x); // right
+            id = create_bullet(cur_weapon.bullet_type, bullet_pos);
+            ent[id].velocity = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
+            ent[id].u = u;
+
+
+            u = vec2(-unit_dir.y, unit_dir.x); // left
+            id = create_bullet(cur_weapon.bullet_type, bullet_pos);
+            ent[id].velocity = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
+            ent[id].u = u;
+            
+            if(cur_weapon.bullets_per_shot >= 8) {
+                unit_dir = vec_rotate_u(unit_dir, vec2(0,0), vec2(M_PI/4, M_PI/4));
+                
+                u = vec2(unit_dir.x, unit_dir.y); // org
+                id = create_bullet(cur_weapon.bullet_type, bullet_pos);
+                ent[id].velocity = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
+                ent[id].u = u;
+                
+                u = vec2(-unit_dir.x, -unit_dir.y); // back
+                id = create_bullet(cur_weapon.bullet_type, bullet_pos);
+                ent[id].velocity = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
+                ent[id].u = u;
+
+                u = vec2(unit_dir.y, -unit_dir.x); // right
+                id = create_bullet(cur_weapon.bullet_type, bullet_pos);
+                ent[id].velocity = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
+                ent[id].u = u;
+
+
+                u = vec2(-unit_dir.y, unit_dir.x); // right
+                id = create_bullet(cur_weapon.bullet_type, bullet_pos);
+                ent[id].velocity = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
+                ent[id].u = u;
+            }
+
+        }
+
     }
 
 }
