@@ -171,18 +171,12 @@ void render_bullets(void)
             Gfx_Image *g = sprites[type].tex;
             Vector2 sz = v2(ent[i].size.x, ent[i].size.y);
             vec p = ent[i].pos;
-            // draw_image(g, v2(pos.x, pos.y), sz, COLOR_WHITE);
-
-
             float radians = atan2(-ent[i].u.y, ent[i].u.x);
 
             Matrix4 m = m4_scalar(1.0);
-            m         = m4_translate(m, v3(p.x, p.y, 0));
-            //m         = m4_rotate_z(m, );
-            m         = m4_rotate(m, v3(0.0f,0.0f,1.0f), radians);
-            // push_z_layer(1000001);
+            m = m4_translate(m, v3(p.x, p.y, 0));
+            m = m4_rotate(m, v3(0.0f,0.0f,1.0f), radians);
             draw_image_xform(g, m, sz, COLOR_WHITE);
-            // pop_z_layer();
         }
 }
 
@@ -502,7 +496,10 @@ void render_game(void)
     render_player();
     
     render_game_texts();
+
     
+    render_ui();
+
     //
     // UI
     //
@@ -510,8 +507,6 @@ void render_game(void)
         if(selected_debug_entity_id != -1)
             render_debug_ui();
 
-    render_ui();
-    
     if(should_draw_info)
         draw_info();
 

@@ -82,6 +82,8 @@ enum
     X(ET_bullet05,       0.6f,   11,   "../dat/art/bullet05.png",         6,  6) \
     X(ET_bullet_lazer,   0.6f,   11,   "../dat/art/bullet_lazer.png",     8,  2) \
     X(ET_bullet_ion,     0.6f,   11,   "../dat/art/bullet_ion.png",      16,  2) \
+    X(ET_shuriken,       0.5f,   11,   "../dat/art/shuriken.png",        8,  8) \
+    X(ET_kunai,          0.4f,   11,   "../dat/art/kunai.png",      24,  6) \
     X(ET_bullet_tank,    1.0f,   11,   "../dat/art/bullet_tank.png",     12,  5) \
     X(ET_mummy,          1.0f,   31,   "../dat/art/mummy.png",           10, 13) \
     X(ET_spider,         1.0f,   31,   "../dat/art/spider.png",          16, 15) \
