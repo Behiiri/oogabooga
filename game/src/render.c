@@ -149,7 +149,7 @@ extern int show_debug_info;
 void render_entities(void)
 {
     int i;
-    for (i=BULLET_ENTITY_MAX; i<max_entity_id; ++i)
+    for (i=BULLET_ENTITY_MAX; i<max_monster_id; ++i) // monsters
         if (ent[i].valid) {
             int type = ent[i].type;
             Gfx_Image *g = sprites[type].tex;
@@ -157,7 +157,39 @@ void render_entities(void)
             Vector2 sz = v2(ent[i].size.x, ent[i].size.y);
             vec p = ent[i].pos;
             push_z_layer(layer);
-            draw_image(g, v2(p.x, p.y), sz, COLOR_WHITE);
+            Vector4 color = COLOR_WHITE;
+            if(ent[i].flash_dur > 0) {
+                ent[i].flash_dur -= dt;
+                color = v4(1,0.45f,0.45f,0.5f);
+            }
+            draw_image(g, v2(p.x, p.y), sz, color);
+            pop_z_layer();
+        }
+
+    for (i=MONSTER_ENTITY_MAX; i<max_entity_id; ++i) // pickups and other stuff
+        if (ent[i].valid) {
+            int type = ent[i].type;
+            Gfx_Image *g = sprites[type].tex;
+            int layer = sprites[type].layer;
+            Vector2 sz = v2(ent[i].size.x, ent[i].size.y);
+            vec p = ent[i].pos;
+            Vector4 color = COLOR_WHITE;
+            if(ent[i].type >= ET__pickup_start && ent[i].type <= ET__pickup_end)
+            {
+                if(world_timer - ent[i].created >= cfg.max_pickup_time - cfg.pickup_flash_dur) {
+                    ent[i].flash_dur += dt;
+                    if(ent[i].flash_dur > 0.2f) {
+                        ent[i].should_flash = !ent[i].should_flash;
+                        ent[i].flash_dur = 0.0f;
+                    }
+                    
+                    if(ent[i].should_flash)
+                        color = v4(1,0.7f,0.7f,0.25);
+                }
+            }
+               
+            push_z_layer(layer);
+            draw_image(g, v2(p.x, p.y), sz, color);
             pop_z_layer();
         }
 }
@@ -314,7 +346,7 @@ void render_ui(void)
         pos.y -= p*o++;
         draw_image(g, pos, sz, COLOR_WHITE);
 
-        string str = tprint(STR("%d"), cur_weapon.fire_rate);
+        string str = tprint(STR("%0.2f"), cur_weapon.fire_rate);
         Gfx_Text_Metrics str_metrics = measure_text(font, str, fh, v2(scale, scale));
 
         pos.y -= sz.y/2;
@@ -421,7 +453,7 @@ void render_debug_ui(void)
 
     {   // dir
         vec v = ent[selected_debug_entity_id].u;
-        string str = tprint(STR("dir: %.1f, %.1f"), v.x, v.y);
+        string str = tprint(STR("dir: %.2f, %.2f"), v.x, v.y);
         Gfx_Text_Metrics metric = measure_text(font, str, fh, v2(s, s));
         int x = px + (w - px - metric.visual_size.x)/2;
         draw_text(font, str, fh, v2(x, h - (p+fh*s)*o++-metric.visual_size.y), v2(s, s), COLOR_WHITE);

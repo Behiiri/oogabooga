@@ -15,10 +15,10 @@
 #endif
 
 #define SCREEN_X (1280.0f/3*2)
-#define SCREEN_Y (720.0f/3*2)
+#define SCREEN_Y  (720.0f/3*2)
 
 static int program_mode = MODE_game;
-static float  dt;
+static float dt;
 static vec player_pos;
 static vec camera_pos;
 static character player_char;
@@ -30,6 +30,8 @@ config cfg = {
     .zoom = 2.5f,
     .player_speed = 50.0f,
     .player_start_pos = (vec){0, 0},
+    .max_pickup_time = 10.0f,
+    .pickup_flash_dur = 3.0f
 };
 
 vec vec2(float x, float y)
@@ -484,8 +486,9 @@ void decrease_fire_cd(float percent)
     if(bullet_fire_cd < 0.02f) bullet_fire_cd = 0.02f;
 }
 
-void increase_fire_rate(int amount)
+void increase_fire_rate(int percent)
 {
+    float  amount = cur_weapon.fire_rate / 100 * percent;
     cur_weapon.fire_rate = cur_weapon.fire_rate + amount;
     if(cur_weapon.fire_rate > 20) cur_weapon.fire_rate = 20;
     bullet_fire_cd = 1.0f/cur_weapon.fire_rate;
@@ -560,7 +563,8 @@ void update_bullets(void)
                                 ent[j].hp -= dmg;
                                 ent[i].valid = 0;
                             }
-
+                            
+                            ent[j].flash_dur = 0.065f;
                             break;
                         }
                     }
@@ -594,10 +598,10 @@ void update_entities(void)
     update_bullets();
 
     int i, j;
-    for (i=BULLET_ENTITY_MAX; i<=max_entity_id; ++i)
+    for (i=BULLET_ENTITY_MAX; i<max_entity_id; ++i)
         if(ent[i].valid) {
             // monsters
-            if(ent[i].type >= ET__monsters_start && ent[i].type <= ET__monsters_end) {
+            if(i>=BULLET_ENTITY_MAX &&  i<=max_monster_id) {
                 if(ent[i].hp <= 0) {
                     ent[i].valid = 0;
                     kill_count++;
@@ -630,6 +634,9 @@ void update_entities(void)
 
             // pickups
             if(ent[i].type == ET_pickup_a) {
+                if(world_timer - ent[i].created >= cfg.max_pickup_time)
+                    ent[i].valid = 0;
+
                 if(check_range_collision_by_id(i, player_id))
                 {
                     ent[i].valid = 0;
@@ -638,10 +645,13 @@ void update_entities(void)
             }
 
             if(ent[i].type == ET_pickup_s) {
+                if(world_timer - ent[i].created >= cfg.max_pickup_time)
+                    ent[i].valid = 0;
+
                 if(check_range_collision_by_id(i, player_id))
                 {
                     ent[i].valid = 0;
-                    increase_fire_rate(2);
+                    increase_fire_rate(20);
                 }
             }
         }
@@ -831,7 +841,7 @@ void process_game_input(vec *axis)
     if (is_key_just_pressed('Q'))
         next_weapon();
     if (is_key_just_pressed('E'))
-        increase_fire_rate(2);
+        increase_fire_rate(20);
     if (is_key_just_pressed('H')) {
         should_draw_info = !should_draw_info;
     }
@@ -948,6 +958,7 @@ int entry(int argc, char **argv)
     window.clear_color = hex_to_rgba(0x181818ff);
 
     game_init();
+
 
     while (!window.should_close) {
         reset_temporary_storage();

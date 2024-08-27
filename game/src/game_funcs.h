@@ -24,7 +24,7 @@ extern int  create_entity(int type, vec pos);
 extern void ent_to_world(float pos[2], entity_id id);
 extern void process_tick_raw(float dt);
 extern int  world_to_tile_pos(float world_pos);
-extern void create_monster(int type, vec pos);
+extern int create_monster(int type, vec pos);
 extern void create_monster_in_random_side(int type, vec origin);
 extern int  create_bullet(int type, vec pos);
 extern entity_id create_entity(int type, vec pos);

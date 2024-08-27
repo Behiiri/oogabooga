@@ -47,16 +47,27 @@ enum
 
 typedef struct
 {
-    vec pos;
-    vec size;
+    union
+    {
+        vec pos;
+        struct { float x, y; };
+    };
+    
+    union
+    {
+        vec size;
+        struct { float w, h; };
+    };
+    uint32 valid;
     vec velocity;
     vec u;
     int hp;
     int type;
-    uint32 valid;
     float speed;
     float radius;
-    int32 rot;
+    float created;
+    float flash_dur;
+    Bool  should_flash;
 } entity;
 
 enum
@@ -115,7 +126,9 @@ enum
     ET__bullets_start  = ET_bullet00,
     ET__bullets_end    = ET_bullet_tank,
     ET__monsters_start = ET_mummy,
-    ET__monsters_end   = ET_robot
+    ET__monsters_end   = ET_robot,
+    ET__pickup_start   = ET_pickup_a,
+    ET__pickup_end     = ET_pickup_s
 };
 
 #define BULLETS_COUNT (ET__bullets_end  - ET__bullets_start  + 1)
@@ -166,7 +179,7 @@ typedef struct
     int bullets_per_shot;
     float bullet_speed; // ??
     int fire_mode;
-    int fire_rate;
+    float fire_rate;
     int fire_range;
     int min_damage;
     int max_damage;
@@ -180,6 +193,8 @@ typedef struct
     float zoom;
     float player_speed;
     vec   player_start_pos;
+    float max_pickup_time;
+    float pickup_flash_dur;
 } config;
 
 extern config cfg;

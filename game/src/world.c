@@ -51,13 +51,17 @@ void world_init(void)
 
     // monsters
 #if 1
-    for (i = 0; i<150; ++i) {
+    for (i = 0; i<50; ++i) {
         int type = get_random_int_range(ET__monsters_start, ET__monsters_end);
         create_monster_in_random_side(type, cfg.player_start_pos);
     }
 #else
-    int type = ET_robot;
-    create_monster_in_random_side(type, cfg.player_start_pos);
+    int type = ET_spider;
+    // create_monster_in_random_side(type, cfg.player_start_pos);
+    // create_monster_in_random_side(type, cfg.player_start_pos);
+
+    // create_monster(ET_robot, vec2(50,0));
+    // create_monster(ET_spider, vec2(100,0));
 #endif
 }
 
@@ -73,6 +77,7 @@ int create_entity(int type, vec pos)
     ent[id].pos = pos;
     ent[id].valid = 1;
     ent[id].type = type;
+    ent[id].created = world_timer;
     set_entity_size(id);
     return id;
 }
@@ -84,6 +89,7 @@ int create_tile(int type, vec pos)
     ent[id].pos = pos;
     ent[id].valid = 1;
     ent[id].type = type;
+    ent[id].created = world_timer;
     set_entity_size(id);
     return id;
 }
@@ -95,13 +101,14 @@ int create_bullet(int type, vec pos)
     game_memset(&ent[id], 0, sizeof(ent[id]));
     ent[id].pos = pos;
     ent[id].valid = 1;
+    ent[id].created = world_timer;
     ent[id].type = type;
     set_entity_size(id);
     return id;
 }
 
 
-void create_monster(int type, vec pos)
+int create_monster(int type, vec pos)
 {
     entity_id id = allocate_monster();
     game_memset(&ent[id], 0, sizeof(ent[id]));
@@ -114,7 +121,9 @@ void create_monster(int type, vec pos)
     ent[id].pos    = pos;
     ent[id].type   = type;
     ent[id].valid  = 1;
+    ent[id].created = world_timer;
     set_entity_size(id);
+    return id;
 }
 
 void create_monster_in_random_side(int type, vec origin)

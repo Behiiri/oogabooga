@@ -8,7 +8,7 @@ if exist bin (
 mkdir bin
 pushd bin
 
-SET USE_JUMBO_BUILD=1
+SET USE_JUMBO_BUILD=0
 
 set COMPILE_FILES= ../build.c
 set LINK_FILES= build.o 
@@ -21,7 +21,7 @@ REM render.o  menu.o
 )
 
 set COMPILER_FLAGS=-g -c -std=c11 -D_CRT_SECURE_NO_WARNINGS -DJUMBO_BUILD=%USE_JUMBO_BUILD% -Wextra -Wno-incompatible-library-redeclaration -Wno-sign-compare -Wno-unused-parameter -Wno-builtin-requires-header -femit-all-decls -fdiagnostics-absolute-paths
-set LINKER_FLAGS=-g -o game.exe -O0 -lkernel32 -lgdi32 -luser32 -lruntimeobject -lwinmm -ld3d11 -ldxguid -ld3dcompiler -lshlwapi -lole32 -lavrt -lksuser -ldbghelp 
+set LINKER_FLAGS=-g -o game.exe -O0 -lkernel32 -lgdi32 -luser32 -lruntimeobject -lwinmm -ld3d11 -ldxguid -ld3dcompiler -lshlwapi -lole32 -lshcore -lavrt -lksuser -ldbghelp 
 
 echo ^>^>^> Compiling...
 set START_TIME=%time%
