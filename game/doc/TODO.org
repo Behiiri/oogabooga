@@ -1,9 +1,10 @@
 #+TITLE: Quests and Bounties
 #+STARTUP: indent
-#+TODO: TODO(t) INPROGRESS(p) INSPECT(i) | DONE(d) FIXED(f) VERIFY(v) CANCELLED(c) DEFERRED(w) INVALID(n)
+#+TODO: TODO(t) INPROGRESS(p) INSPECT(i) | DONE(d) FIXED(f) PARTIAL(r) VERIFY(v) DEFERRED(w) CANCELLED(c) INVALID(n)
 
 * Quests
-** TODO add health to player character
+** DONE add health to player character
+** TODO implement monster-player collision
 ** TODO add xp
 ** DONE add kill count
 ** TODO add weapon pickups
@@ -15,7 +16,8 @@
 ** TODO add collision for monsters and Implement better movement for them
 ** DONE add icon for current weapon
 ** TODO make fire rate pickups a character buff
-** TODO change fire rate pickups to increase a percent of the base fire rate of each weapon
+** PARTIAL change fire rate pickups to increase a percent of the base fire rate of each weapon
+pickups are percentage based now but it gets applied to current fire rate instead of base fire rate
 
 * Bounties
 ** INVALID after using special bullet, the range change gets applied to normal bullets too.

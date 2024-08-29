@@ -36,6 +36,7 @@ void world_init(void)
         ent[player_id].pos.x = 0;
         ent[player_id].pos.y = 0;
         ent[player_id].type = ET_player;
+        ent[player_id].hp = 100;
         set_entity_size(player_id);
     }
 

@@ -109,6 +109,7 @@ enum
     X(UI_special_ammo,   1.0f,    1,   "../dat/art/ui_special_ammo.png", 16, 16) \
     X(UI_fire_rate,      1.0f,    1,   "../dat/art/ui_fire_rate.png",    16, 16) \
     X(UI_skull,          0.625f,  1,   "../dat/art/ui_skull.png",        16, 16) \
+    X(UI_health,          1.0,     1,   "../dat/art/ui_health.png",       16, 16) \
     X(UI_WT_pistol,      1.5f,    1,   "../dat/art/ui_wt_pistol.png",    16, 12) \
     X(UI_WT_auto,        1.5f,    1,   "../dat/art/ui_wt_auto.png",      16, 12) \
     X(UI_WT_shotgun,     1.5f,    1,   "../dat/art/ui_wt_shotgun.png",   16, 12)

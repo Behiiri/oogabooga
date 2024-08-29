@@ -33,7 +33,6 @@ Vector2 get_scaled_sprite_size_v2(int type)
               sprite_info[type].y * sprite_info[type].scale);
 }
 
-
 vec get_scaled_sprite_size(int type)
 {
     vec v;
@@ -41,7 +40,6 @@ vec get_scaled_sprite_size(int type)
     v.y = sprite_info[type].y * sprite_info[type].scale;
     return v;
 }
-
 
 Gfx_Image* load_sprite_by_id(int id)
 {
@@ -346,7 +344,7 @@ void render_ui(void)
         pos.y -= p*o++;
         draw_image(g, pos, sz, COLOR_WHITE);
 
-        string str = tprint(STR("%0.2f"), cur_weapon.fire_rate);
+        string str = tprint(STR("%0.1f"), cur_weapon.fire_rate);
         Gfx_Text_Metrics str_metrics = measure_text(font, str, fh, v2(scale, scale));
 
         pos.y -= sz.y/2;
@@ -370,7 +368,7 @@ void render_ui(void)
         Gfx_Image *g = sprites[cur_weapon.icon].tex;
         Vector2 sz = get_scaled_sprite_size_v2(cur_weapon.icon);
         int y = 10;
-        Vector2 pos = v2(x, y);
+        Vector2 pos = v2(w - x*3, y);
         draw_image(g, pos, sz, COLOR_WHITE);
 
         // TODO show ammo count?
@@ -397,6 +395,23 @@ void render_ui(void)
         pos.x = pos.x + sz.x + 3;
         draw_text(font, str, fh, pos, v2(scale, scale), COLOR_WHITE);
     }
+
+    { // Health
+        
+        Gfx_Image *g = sprites[UI_health].tex;
+        Vector2 sz = get_scaled_sprite_size_v2(UI_health);
+        int y = 10;
+        Vector2 pos = v2(x, y);
+        draw_image(g, pos, sz, COLOR_WHITE);
+
+        string str = tprint(STR("%d"), ent[player_id].hp);
+        // Gfx_Text_Metrics str_metrics = measure_text(font, str, fh, v2(scale, scale));
+
+        pos.y = pos.y + sz.y/3;
+        pos.x = pos.x + sz.x + 3;
+        draw_text(font, str, fh, pos, v2(scale, scale), COLOR_WHITE);
+    }
+
 }
 
 extern entity_id selected_debug_entity_id;
