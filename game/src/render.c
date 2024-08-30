@@ -81,12 +81,33 @@ void draw_aabb(box b)
     draw_outline_rect(p0, p1, p2, p3, v4(0.2, 0.2, 0.2, 1.0));
 }
 
-void draw_all_entity_aabb()
+
+extern Gfx_Font* font; 
+extern int font_height;
+void draw_monster_debug_details()
 {
     int i;
-    for (i=MONSTER_ENTITY_MIN; i<max_entity_id; ++i)
-        if (ent[i].valid)
+    for (i=MONSTER_ENTITY_MIN; i<max_monster_id; ++i)
+        if (ent[i].valid) {
             draw_aabb(ent_to_box(i));
+            // id
+            float s = 0.1f;
+            string str = tprint(STR("%d"), i);
+            Vector4 color = COLOR_GREEN;
+            Gfx_Text_Metrics str_sz = measure_text(font, str, font_height, v2(s, s));
+            Vector2 p = v2(ent[i].x-(str_sz.functional_size.x/2)+ent[i].w/2, ent[i].y);
+            
+            draw_text(font, str, font_height, p, v2(s, s), color);
+
+            // id minus offset
+            s = 0.2f;
+            str = tprint(STR("%d"), i-MONSTER_ENTITY_MIN);
+            color = COLOR_RED;
+            str_sz = measure_text(font, str, font_height, v2(s, s));
+            p = v2(ent[i].x-(str_sz.functional_size.x/2)+ent[i].w/2, ent[i].y+ent[i].w/2);
+
+            draw_text(font, str, font_height, p, v2(s, s), color);
+        }
 }
 
 Vector2 v2_rotate_u(Vector2 v, Vector2 p, vec u)
@@ -125,14 +146,13 @@ void draw_obb(obb o)
     draw_circle(v2(p0.x-0.5f, p0.y-0.5f), v2(1,1), COLOR_RED);
 }
 
-void draw_all_entity_obb()
+void draw_bullet_debug_details()
 {
     int i;
     for (i=TILE_ENTITY_MAX; i<max_bullet_id; ++i)
         if (ent[i].valid)
             draw_obb(ent_to_obb(i));
 }
-
 
 extern vec player_pos;
 void render_player(void)
@@ -154,12 +174,13 @@ void render_entities(void)
             int layer = sprites[type].layer;
             Vector2 sz = v2(ent[i].size.x, ent[i].size.y);
             vec p = ent[i].pos;
-            push_z_layer(layer);
             Vector4 color = COLOR_WHITE;
             if(ent[i].flash_dur > 0) {
                 ent[i].flash_dur -= dt;
-                color = v4(1,0.45f,0.45f,0.5f);
+                color = v4(1, 0.85f, 0.85f, 0.25f);
             }
+            
+            push_z_layer(layer);
             draw_image(g, v2(p.x, p.y), sz, color);
             pop_z_layer();
         }
@@ -303,8 +324,6 @@ void draw_info(void)
     //draw_text_on_screen(0, (p+fh*s)*o++, s, tprint(STR("monster pos:  %f , %f"), ent[BULLET_ENTITY_MAX].pos.x, ent[BULLET_ENTITY_MAX].pos.y));
 }
 
-extern Gfx_Font* font;
-extern int font_height;
 extern int special_ammo;
 void render_ui(void)
 {
@@ -404,8 +423,7 @@ void render_ui(void)
         Vector2 pos = v2(x, y);
         draw_image(g, pos, sz, COLOR_WHITE);
 
-        string str = tprint(STR("%d"), ent[player_id].hp);
-        // Gfx_Text_Metrics str_metrics = measure_text(font, str, fh, v2(scale, scale));
+        string str = tprint(STR("%1.0f"), ent[player_id].hp);
 
         pos.y = pos.y + sz.y/3;
         pos.x = pos.x + sz.x + 3;
@@ -459,7 +477,7 @@ void render_debug_ui(void)
     }
 
     {   // velocity
-        vec v = ent[selected_debug_entity_id].velocity;
+        vec v = ent[selected_debug_entity_id].v;
         string str = tprint(STR("v: %.1f, %.1f"), v.x, v.y);
         Gfx_Text_Metrics metric = measure_text(font, str, fh, v2(s, s));
         int x = px + (w - px - metric.visual_size.x)/2;
@@ -533,17 +551,16 @@ void render_game(void)
     //
     render_tiles();
 
-    if(show_debug_info) {
-        draw_all_entity_aabb();
-        draw_all_entity_obb();
-    }
-    
     render_entities();
     render_bullets();
     render_player();
     
+    if(show_debug_info) {
+        draw_monster_debug_details();
+        draw_bullet_debug_details();
+    }
+        
     render_game_texts();
-
     
     render_ui();
 

@@ -59,10 +59,10 @@ typedef struct
         struct { float w, h; };
     };
     uint32 valid;
-    vec velocity;
-    vec u;
-    int hp;
     int type;
+    vec v;
+    vec u;
+    float hp;
     float speed;
     float radius;
     float created;
@@ -93,8 +93,8 @@ enum
     X(ET_bullet05,       0.6f,   11,   "../dat/art/bullet05.png",         6,  6) \
     X(ET_bullet_lazer,   0.6f,   11,   "../dat/art/bullet_lazer.png",     8,  2) \
     X(ET_bullet_ion,     0.6f,   11,   "../dat/art/bullet_ion.png",      16,  2) \
-    X(ET_shuriken,       0.5f,   11,   "../dat/art/shuriken.png",        8,  8) \
-    X(ET_kunai,          0.4f,   11,   "../dat/art/kunai.png",      24,  6) \
+    X(ET_shuriken,       0.5f,   11,   "../dat/art/shuriken.png",         8,  8) \
+    X(ET_kunai,          0.4f,   11,   "../dat/art/kunai.png",           24,  6) \
     X(ET_bullet_tank,    1.0f,   11,   "../dat/art/bullet_tank.png",     12,  5) \
     X(ET_mummy,          1.0f,   31,   "../dat/art/mummy.png",           10, 13) \
     X(ET_spider,         1.0f,   31,   "../dat/art/spider.png",          16, 15) \
@@ -105,11 +105,12 @@ enum
     X(ET_pickup_c,       0.5f,    1,   "../dat/art/pickup_c.png",        14, 14) \
     X(ET_pickup_m,       0.5f,    1,   "../dat/art/pickup_m.png",        14, 14) \
     X(ET_pickup_s,       0.5f,    1,   "../dat/art/pickup_s.png",        14, 14) \
+    X(ET_pickup_health,  0.5f,    1,   "../dat/art/pickup_health.png",   14, 14) \
     X(ET_gem_green,      0.5f,    1,   "../dat/art/gem_green.png",       14, 14) \
     X(UI_special_ammo,   1.0f,    1,   "../dat/art/ui_special_ammo.png", 16, 16) \
     X(UI_fire_rate,      1.0f,    1,   "../dat/art/ui_fire_rate.png",    16, 16) \
     X(UI_skull,          0.625f,  1,   "../dat/art/ui_skull.png",        16, 16) \
-    X(UI_health,          1.0,     1,   "../dat/art/ui_health.png",       16, 16) \
+    X(UI_health,         0.5f,    1,   "../dat/art/ui_health.png",       16, 16) \
     X(UI_WT_pistol,      1.5f,    1,   "../dat/art/ui_wt_pistol.png",    16, 12) \
     X(UI_WT_auto,        1.5f,    1,   "../dat/art/ui_wt_auto.png",      16, 12) \
     X(UI_WT_shotgun,     1.5f,    1,   "../dat/art/ui_wt_shotgun.png",   16, 12)
@@ -129,7 +130,7 @@ enum
     ET__monsters_start = ET_mummy,
     ET__monsters_end   = ET_robot,
     ET__pickup_start   = ET_pickup_a,
-    ET__pickup_end     = ET_pickup_s
+    ET__pickup_end     = ET_pickup_health
 };
 
 #define BULLETS_COUNT (ET__bullets_end  - ET__bullets_start  + 1)
