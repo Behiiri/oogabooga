@@ -15,11 +15,6 @@ inline entity_id monster_id(int i)
     return MONSTER_ENTITY_MIN + i;
 }
 
-Bool is_monster(int entity_type)
-{
-    return (entity_type >= ET__monsters_start || entity_type <= ET__monsters_end);
-}
-
 static int get_monster_index(int type)
 {
     if(!is_monster(type))  return -1;

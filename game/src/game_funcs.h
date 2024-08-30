@@ -38,6 +38,8 @@ extern entity_id allocate_player(void);
 extern entity_id allocate_tile(void);
 extern entity_id allocate_bullet(void);
 extern entity_id allocate_monster(void);
+extern Bool is_pickup(int entity_type);
+extern Bool is_monster(int entity_type);
 
 // render.c
 extern vec  get_scaled_sprite_size(int type);

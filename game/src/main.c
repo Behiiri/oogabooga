@@ -77,10 +77,9 @@ float distance(vec a, vec b)
 range ent_to_range(entity_id id)
 {
     range range;
-    entity en = ent[id];
-    vec s = en.size;
-    range.c = vec2(en.pos.x + s.x/2, en.pos.y + s.y/2);
-    range.r = (s.x > s.y ? s.x : s.y);
+    entity *en = &ent[id];
+    range.c = vec2(en->x + en->w/2, en->y + en->h/2);
+    range.r = (en->w > en->h ? en->w : en->h);
     return range;
 }
 
@@ -169,6 +168,7 @@ Bool check_obb_collision_by_id(entity_id a, entity_id b)
     return check_obb_collision(&o1, &o2);
 }
 
+
 Bool resolve_overlap(int ent_a, int ent_b)
 {
     entity *a = &ent[ent_a];
@@ -176,28 +176,27 @@ Bool resolve_overlap(int ent_a, int ent_b)
 
     float ox = ((a->x + a->w) - b->x) < ((b->x + b->w) - a->x)
         ? ((a->x + a->w) - b->x) : ((b->x + b->w) - a->x);
-    float oy = ((a->y + a->h) - b->y) < ((b->y + b->h) - a->y) 
+    float oy = ((a->y + a->h) - b->y) < ((b->y + b->h) - a->y)
         ? ((a->y + a->h) - b->y) : ((b->y + b->h) - a->y);
 
     if (ox < 0 || oy < 0 || ox > a->w+b->w || oy > a->h+b->h)
         return false;
-
     vec p = player_pos;
     if (ox < oy) {
         if (a->x < b->x) {
             if (a->x > p.x) b->x += ox;
-            else           a->x -= ox;
+            else            a->x -= ox;
         } else {
             if (a->x > p.x) a->x += ox;
-            else                    b->x -= ox;
+            else            b->x -= ox;
         }
     } else {
         if (a->y < b->y) {
             if (a->y > p.y) b->y += oy;
-            else                    a->y -= oy;
+            else            a->y -= oy;
         } else {
             if (a->y > p.y) a->y += oy;
-            else                    b->y -= oy;
+            else            b->y -= oy;
         }
     }
 
@@ -229,7 +228,7 @@ Bool resolve_overlap(int ent_a, int ent_b)
 
     float sa = a->speed;
     float sb = b->speed;
-    
+
     float dx = (b->pos.x - a->pos.x);
     float dy = (b->pos.y - a->pos.y);
     float len = sqrt(dx * dx + dy * dy);
@@ -246,8 +245,8 @@ Bool resolve_overlap(int ent_a, int ent_b)
         a->x -= dx * (sb - sa) * dt;
         a->y -= dy * (sb - sa) * dt;
     }
-    
-    return true; 
+
+    return true;
 }
 
 int get_random_int(void) {
@@ -333,9 +332,9 @@ vec get_random_pos_on_side(vec origin, int side)
 
     switch(side) {
         case LEFT: // 0
-        x = origin.x - sw/2 - dx/(fac);
-        y = origin.y - sh/2 + dy;
-        break;
+            x = origin.x - sw/2 - dx/(fac);
+            y = origin.y - sh/2 + dy;
+            break;
         case UP: // 1
             x = origin.x + dx - sw/2;
             y = origin.y + sh/2 + dy/(fac);
@@ -437,7 +436,7 @@ void fire_bullet(void)
             id = create_bullet(cur_weapon.bullet_type, bullet_pos);
             ent[id].v = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
             ent[id].u = u;
-            
+
             u = vec_rotate(unit_dir, -M_PI/24);
             id = create_bullet(cur_weapon.bullet_type, bullet_pos);
             ent[id].v = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
@@ -481,7 +480,7 @@ void fire_bullet(void)
                 ent[id].u = u;
             }
         }
-        
+
         return;
     }
 
@@ -494,13 +493,13 @@ void fire_bullet(void)
         int id;
         vec bullet_pos = vec2(player_pos.x + offset_x, player_pos.y + offset_y);
         vec u = unit_dir;
-        
+
         id = create_bullet(cur_weapon.bullet_type, bullet_pos);
         ent[id].v = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
         ent[id].u = u;
 
         if (cur_weapon.bullets_per_shot >= 4) {
-     
+
             u = vec2(-unit_dir.x, -unit_dir.y); // back
             id = create_bullet(cur_weapon.bullet_type, bullet_pos);
             ent[id].v = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
@@ -511,20 +510,19 @@ void fire_bullet(void)
             ent[id].v = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
             ent[id].u = u;
 
-
             u = vec2(-unit_dir.y, unit_dir.x); // left
             id = create_bullet(cur_weapon.bullet_type, bullet_pos);
             ent[id].v = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
             ent[id].u = u;
-            
+
             if (cur_weapon.bullets_per_shot >= 8) {
                 unit_dir = vec_rotate_u(unit_dir, vec2(0,0), vec2(M_PI/4, M_PI/4));
-                
+
                 u = vec2(unit_dir.x, unit_dir.y); // org
                 id = create_bullet(cur_weapon.bullet_type, bullet_pos);
                 ent[id].v = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
                 ent[id].u = u;
-                
+
                 u = vec2(-unit_dir.x, -unit_dir.y); // back
                 id = create_bullet(cur_weapon.bullet_type, bullet_pos);
                 ent[id].v = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
@@ -534,7 +532,6 @@ void fire_bullet(void)
                 id = create_bullet(cur_weapon.bullet_type, bullet_pos);
                 ent[id].v = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
                 ent[id].u = u;
-
 
                 u = vec2(-unit_dir.y, unit_dir.x); // right
                 id = create_bullet(cur_weapon.bullet_type, bullet_pos);
@@ -615,36 +612,37 @@ void update_bullets(void)
     int i, j; // bullet, monster
     for (i=TILE_ENTITY_MAX; i<max_bullet_id; ++i) { // bullets
         if (ent[i].valid) {
-            float d = distance(ent[i].pos, ent[player_id].pos);
+            entity *en = &ent[i];
+            float d = distance(en->pos, ent[player_id].pos);
             if (d > cur_weapon.fire_range) {
-                ent[i].valid = 0;
-                if (ent[i].type != ET_bullet_tank)
+                en->valid = 0;
+                if (en->type != ET_bullet_tank)
                     if (d > 150.0f)
-                        ent[i].valid = 0;
+                        en->valid = 0;
             }
 
-            ent[i].pos.x += ent[i].v.x * dt * cur_weapon.bullet_speed; // TODO @Hardcoded value
-            ent[i].pos.y += ent[i].v.y * dt * cur_weapon.bullet_speed;
+            en->pos.x += en->v.x * dt * cur_weapon.bullet_speed; // TODO @Hardcoded value
+            en->pos.y += en->v.y * dt * cur_weapon.bullet_speed;
 
             for (j=BULLET_ENTITY_MAX; j<=max_monster_id; ++j)
-                if (ent[j].valid && (ent[j].type >= ET__monsters_start || ent[j].type <= ET__monsters_end)) {
+                if (ent[j].valid) {
                     if (check_range_collision_by_id(i, j))
                     {
                         if (check_obb_collision_by_id(i, j))
                         {
-                            if (ent[i].type == ET_bullet_tank) {
+                            if (en->type == ET_bullet_tank) {
                                 int dmg = 99;
                                 ent[j].hp = ent[j].hp - dmg;
-                                add_game_text(ent[i].pos, dmg, 0.33, 2);
+                                add_game_text(en->pos, dmg, 0.33, 2);
                             } else {
                                 int dmg = get_random_int_range(cur_weapon.min_damage, cur_weapon.max_damage);
                                 int color_id = 0;
                                 if (dmg > 25) color_id = 1;
-                                add_game_text(ent[i].pos, dmg, 0.25, color_id);
+                                add_game_text(en->pos, dmg, 0.25, color_id);
                                 ent[j].hp = ent[j].hp - dmg;
-                                ent[i].valid = 0;
+                                en->valid = 0;
                             }
-                            
+
                             ent[j].flash_dur = 0.065f;
                             break;
                         }
@@ -681,22 +679,22 @@ void update_entities(void)
     int i, j;
     for (i=BULLET_ENTITY_MAX; i<max_entity_id; ++i)
         if (ent[i].valid) {
-            // entity *en = ent + i;
+            entity *en = &ent[i];
             // monsters
             if (i>=BULLET_ENTITY_MAX &&  i<=max_monster_id) {
-                if (ent[i].hp <= 0) {
-                    ent[i].valid = 0;
-                    kill_count++; 
+                if (en->hp <= 0) {
+                    en->valid = 0;
+                    kill_count++;
                     int rand = get_random_int_range(0, 100);
                     if(rand < 3) // @hardcoded 3 percent chance of dropping a pickup
                     {
                         rand = get_random_int_range(0, 6);
                         if (rand < 2) {
-                            create_entity(ET_pickup_a, ent[i].pos);
+                            create_entity(ET_pickup_a, en->pos);
                         } else if (rand >= 2 && rand < 4) {
-                            create_entity(ET_pickup_s, ent[i].pos);
+                            create_entity(ET_pickup_s, en->pos);
                         } else if (rand >= 4 && rand < 6) {
-                            create_entity(ET_pickup_health, ent[i].pos);
+                            create_entity(ET_pickup_health, en->pos);
                         }
                     }
 
@@ -704,45 +702,53 @@ void update_entities(void)
                     create_monster_in_random_side(type, player_pos);
                 }
 
-                if (is_out_of_screen(ent[player_id].pos, ent[i].pos, 1.5f)) // @hardcoded
+                if (is_out_of_screen(ent[player_id].pos, en->pos, 1.5f)) // @hardcoded
                 {
-                    vec pos = reposition_monster(ent[player_id].pos, ent[i].pos);
-                    ent[i].pos = pos;
+                    vec pos = reposition_monster(ent[player_id].pos, en->pos);
+                    en->pos = pos;
                 }
 
-                vec p = ent[i].pos;
-                move_towards(&p, player_pos, dt, ent[i].speed);
-                ent[i].pos.x = p.x;
-                ent[i].pos.y = p.y;
-                
+                vec p = en->pos;
+                move_towards(&p, player_pos, dt, en->speed);
+                en->pos.x = p.x;
+                en->pos.y = p.y;
+
                 int j;
                 //for (j = i + 1; j<max_monster_id; ++j) // when two monster are on the right side they does not collide and one of them comes to left side of the player
                 for (j = BULLET_ENTITY_MAX; j<max_monster_id; ++j)
                     if (ent[j].valid) {
                         if (i == j) continue;
-                        if (ent[i].type >= ET__monsters_start && ent[i].type <= ET__monsters_end) {
+                        if (en->type >= ET__monsters_start && en->type <= ET__monsters_end) {
                             resolve_overlap(i, j);
                         }
                     }
 
                 if (check_box_collision_by_id(0, i))
                 {
-                    ent[player_id].hp -= 10.0f * dt;
-                    resolve_overlap(i, 0);    
+                    ent[player_id].hp -= 50.0f * dt;
+                    if(ent[player_id].hp <= 0) {
+                        ent[player_id].hp = 0;
+                        //program_mode = MODE_menu;   
+                    }
+                    resolve_overlap(i, 0);
                 }
-                
             }
 
             // pickups
-            if (ent[i].type >= ET__pickup_start && ent[i].type <= ET__pickup_end)
+            if (is_pickup(en->type))
             {
-                if (world_timer - ent[i].created >= cfg.max_pickup_time)
-                    ent[i].valid = 0;
-                
+                if(en->picked) {
+                    animate_v2_to_d(&en->pos, ent[player_id].pos, dt, 30.0f);
+                    if(distance(en->pos, ent[player_id].pos) < 5)
+                        en->valid = 0;    
+                    continue;
+                } else if (world_timer - en->created >= cfg.max_pickup_time)
+                    en->valid = 0;
+
                 if (check_range_collision_by_id(i, player_id))
                 {
-                    ent[i].valid = 0;
-                    switch (ent[i].type) {
+                    en->picked = True;
+                    switch (en->type) {
                         case ET_pickup_a:
                             special_ammo += 3;
                             break;
@@ -753,10 +759,10 @@ void update_entities(void)
                             ent[player_id].hp += 20;
                             break;
                     }
-                    
+
                 }
             }
-            
+
         }
 }
 
@@ -771,7 +777,7 @@ Bool is_mouse_over_an_entity(int *ent_id)
 
     box a = ent_to_box(0);
     if (!(mouse_x < a.min.x || mouse_x > a.max.x) &&
-       !(mouse_y < a.min.y || mouse_y > a.max.y)) {
+        !(mouse_y < a.min.y || mouse_y > a.max.y)) {
 
         *ent_id = 0;
         return True;
@@ -779,13 +785,13 @@ Bool is_mouse_over_an_entity(int *ent_id)
 
     int i;
     for( i=MONSTER_ENTITY_MIN; i<max_monster_id; ++i ) {
-            box a = ent_to_box(i);
+        box a = ent_to_box(i);
 
-            if (mouse_x < a.min.x || mouse_x > a.max.x) continue;
-            if (mouse_y < a.min.y || mouse_y > a.max.y) continue;
+        if (mouse_x < a.min.x || mouse_x > a.max.x) continue;
+        if (mouse_y < a.min.y || mouse_y > a.max.y) continue;
 
-            *ent_id = i;
-            return True;
+        *ent_id = i;
+        return True;
     }
 
     for( i=BULLET_ENTITY_MIN; i<max_bullet_id; ++i ) {
@@ -802,13 +808,13 @@ Bool is_mouse_over_an_entity(int *ent_id)
     }
 
     for( i=TILE_ENTITY_MIN; i<max_tile_id; ++i ) {
-            box a = ent_to_box(i);
+        box a = ent_to_box(i);
 
-            if (mouse_x < a.min.x || mouse_x > a.max.x) continue;
-            if (mouse_y < a.min.y || mouse_y > a.max.y) continue;
+        if (mouse_x < a.min.x || mouse_x > a.max.x) continue;
+        if (mouse_y < a.min.y || mouse_y > a.max.y) continue;
 
-            *ent_id = i;
-            return True;
+        *ent_id = i;
+        return True;
     }
 
     return False;

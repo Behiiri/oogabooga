@@ -67,3 +67,13 @@ entity_id allocate_entity(void)
         }
     return 0;
 }
+
+inline Bool is_monster(int entity_type)
+{
+    return (entity_type >= ET__monsters_start && entity_type <= ET__monsters_end);
+}
+
+inline Bool is_pickup(int entity_type)
+{
+    return (entity_type >= ET__pickup_start && entity_type <= ET__pickup_end);    
+}

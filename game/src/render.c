@@ -89,13 +89,14 @@ void draw_monster_debug_details()
     int i;
     for (i=MONSTER_ENTITY_MIN; i<max_monster_id; ++i)
         if (ent[i].valid) {
+            entity *en = &ent[i];
             draw_aabb(ent_to_box(i));
             // id
             float s = 0.1f;
             string str = tprint(STR("%d"), i);
             Vector4 color = COLOR_GREEN;
             Gfx_Text_Metrics str_sz = measure_text(font, str, font_height, v2(s, s));
-            Vector2 p = v2(ent[i].x-(str_sz.functional_size.x/2)+ent[i].w/2, ent[i].y);
+            Vector2 p = v2(en->x-(str_sz.functional_size.x/2)+en->w/2, en->y);
             
             draw_text(font, str, font_height, p, v2(s, s), color);
 
@@ -104,7 +105,7 @@ void draw_monster_debug_details()
             str = tprint(STR("%d"), i-MONSTER_ENTITY_MIN);
             color = COLOR_RED;
             str_sz = measure_text(font, str, font_height, v2(s, s));
-            p = v2(ent[i].x-(str_sz.functional_size.x/2)+ent[i].w/2, ent[i].y+ent[i].w/2);
+            p = v2(en->x-(str_sz.functional_size.x/2)+en->w/2, en->y+en->w/2);
 
             draw_text(font, str, font_height, p, v2(s, s), color);
         }
@@ -169,14 +170,15 @@ void render_entities(void)
     int i;
     for (i=BULLET_ENTITY_MAX; i<max_monster_id; ++i) // monsters
         if (ent[i].valid) {
-            int type = ent[i].type;
+            entity *en = &ent[i];
+            int type = en->type;
             Gfx_Image *g = sprites[type].tex;
             int layer = sprites[type].layer;
-            Vector2 sz = v2(ent[i].size.x, ent[i].size.y);
-            vec p = ent[i].pos;
+            Vector2 sz = v2(en->size.x, en->size.y);
+            vec p = en->pos;
             Vector4 color = COLOR_WHITE;
-            if(ent[i].flash_dur > 0) {
-                ent[i].flash_dur -= dt;
+            if(en->flash_dur > 0) {
+                en->flash_dur -= dt;
                 color = v4(1, 0.85f, 0.85f, 0.25f);
             }
             
@@ -187,22 +189,23 @@ void render_entities(void)
 
     for (i=MONSTER_ENTITY_MAX; i<max_entity_id; ++i) // pickups and other stuff
         if (ent[i].valid) {
-            int type = ent[i].type;
+            entity *en = &ent[i];
+            int type = en->type;
             Gfx_Image *g = sprites[type].tex;
             int layer = sprites[type].layer;
-            Vector2 sz = v2(ent[i].size.x, ent[i].size.y);
-            vec p = ent[i].pos;
+            Vector2 sz = v2(en->size.x, en->size.y);
+            vec p = en->pos;
             Vector4 color = COLOR_WHITE;
-            if(ent[i].type >= ET__pickup_start && ent[i].type <= ET__pickup_end)
+            if(en->type >= ET__pickup_start && en->type <= ET__pickup_end)
             {
-                if(world_timer - ent[i].created >= cfg.max_pickup_time - cfg.pickup_flash_dur) {
-                    ent[i].flash_dur += dt;
-                    if(ent[i].flash_dur > 0.2f) {
-                        ent[i].should_flash = !ent[i].should_flash;
-                        ent[i].flash_dur = 0.0f;
+                if(world_timer - en->created >= cfg.max_pickup_time - cfg.pickup_flash_dur) {
+                    en->flash_dur += dt;
+                    if(en->flash_dur > 0.2f) {
+                        en->should_flash = !en->should_flash;
+                        en->flash_dur = 0.0f;
                     }
                     
-                    if(ent[i].should_flash)
+                    if(en->should_flash)
                         color = v4(1,0.7f,0.7f,0.25);
                 }
             }
@@ -218,11 +221,12 @@ void render_bullets(void)
     int i;
     for (i=BULLET_ENTITY_MIN; i<max_bullet_id; ++i)
         if (ent[i].valid) {
-            int type = ent[i].type;
+            entity *en = &ent[i];
+            int type = en->type;
             Gfx_Image *g = sprites[type].tex;
-            Vector2 sz = v2(ent[i].size.x, ent[i].size.y);
-            vec p = ent[i].pos;
-            float radians = atan2(-ent[i].u.y, ent[i].u.x);
+            Vector2 sz = v2(en->size.x, en->size.y);
+            vec p = en->pos;
+            float radians = atan2(-en->u.y, en->u.x);
 
             Matrix4 m = m4_scalar(1.0);
             m = m4_translate(m, v3(p.x, p.y, 0));
@@ -265,10 +269,11 @@ void render_tiles(void)
     int i;
     for (i=1;i<max_tile_id;++i) // ent[0] is player
         if (ent[i].valid) {
-            int type = ent[i].type;
+            entity *en = &ent[i];
+            int type = en->type;
             Gfx_Image *g = sprites[type].tex;
-            Vector2 sz = v2(ent[i].size.x, ent[i].size.y);
-            Vector2 pos = v2(ent[i].pos.x, ent[i].pos.y);
+            Vector2 sz = v2(en->w, en->h);
+            Vector2 pos = v2(en->x, en->y);
             draw_image(g, pos, sz, COLOR_WHITE);
         }
 }
