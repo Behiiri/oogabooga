@@ -14,17 +14,16 @@
 #include "entity.c"
 #endif
 
-#define SCREEN_X (1280.0f/3*2)
-#define SCREEN_Y  (720.0f/3*2)
-
 static int program_mode = MODE_game;
 static float dt;
 static vec player_pos;
 static vec camera_pos;
 static character player_char;
 static weapon cur_weapon;
-
 static int kill_count;
+
+static veci inner_spawn_box;
+static veci outer_spawn_box;
 
 config cfg = {
     .zoom = 2.5f,
@@ -323,29 +322,28 @@ vec screen_to_world(float x, float y)
 
 vec get_random_pos_on_side(vec origin, int side)
 {
-    float fac = 1.2f;
-    int sw = window.scaled_width/cfg.zoom  *fac;
-    int sh = window.scaled_height/cfg.zoom *fac;
     int x, y;
-    int dx = rand() % sw;
-    int dy = rand() % sh;
-
+    int dx = inner_spawn_box.x + rand() % (outer_spawn_box.x - inner_spawn_box.x);
+    int dy = inner_spawn_box.y + rand() % (outer_spawn_box.y - inner_spawn_box.y);
+    int ddx = rand() % (outer_spawn_box.x*2);
+    int ddy = rand() % (outer_spawn_box.y*2);
+    
     switch(side) {
         case LEFT: // 0
-            x = origin.x - sw/2 - dx/(fac);
-            y = origin.y - sh/2 + dy;
+            x = origin.x - dx;
+            y = origin.y - outer_spawn_box.y + ddy;
             break;
         case UP: // 1
-            x = origin.x + dx - sw/2;
-            y = origin.y + sh/2 + dy/(fac);
+            x = origin.x - outer_spawn_box.x + ddx;
+            y = origin.y + dy;
             break;
         case RIGHT: // 2
-            x = origin.x + sw/2 + dx/(fac);
-            y = origin.y - sh/2 + dy;
+            x = origin.x + dx;
+            y = origin.y - outer_spawn_box.y + ddy;
             break;
         case DOWN: // 3
-            x = origin.x + dx - sw/2;
-            y = origin.y - sh/2 - dy/(fac);
+            x = origin.x - outer_spawn_box.x + ddx;
+            y = origin.y - dy;
             break;
     }
 
@@ -359,26 +357,19 @@ vec get_random_spawn_pos(vec origin)
     return get_random_pos_on_side(origin, side);
 }
 
-int get_new_spawn_side(vec origin, vec pos)
-{
-    int VIEW_WIDTH  = window.width/cfg.zoom;
-    int VIEW_HEIGHT = window.height/cfg.zoom;
-    float lb = origin.x - VIEW_WIDTH  / 2;
-    float rb = origin.x + VIEW_WIDTH  / 2;
-    float tb = origin.y + VIEW_HEIGHT / 2;
-    float bb = origin.y - VIEW_HEIGHT / 2;
-
-    if (pos.x > rb) return LEFT;
-    if (pos.y < bb) return UP;
-    if (pos.x < lb) return RIGHT;
-    if (pos.y > tb) return DOWN;
-
-    return -1;
-}
-
 vec reposition_monster(vec player_pos, vec pos)
 {
-    int side = get_new_spawn_side(player_pos, pos);
+    int side = -1;
+    float lb = player_pos.x - inner_spawn_box.x;
+    float rb = player_pos.x + inner_spawn_box.x;
+    float tb = player_pos.y + inner_spawn_box.y;
+    float bb = player_pos.y - inner_spawn_box.y;
+
+    if (pos.x > rb) side = LEFT;
+    if (pos.y < bb) side = UP;
+    if (pos.x < lb) side = RIGHT;
+    if (pos.y > tb) side = DOWN;
+    
     return get_random_pos_on_side(player_pos, side);
 }
 
@@ -574,8 +565,8 @@ void increase_fire_rate(int percent)
 
 void update_view(void)
 {
-    draw_frame.projection = m4_make_orthographic_projection(window.scaled_width  * -0.5f, window.scaled_width  * 0.5f,
-                                                            window.scaled_height * -0.5f, window.scaled_height * 0.5f, -1, 10);
+    draw_frame.projection = m4_make_orthographic_projection(window.width  * -0.5f, window.width  * 0.5f,
+                                                            window.height * -0.5f, window.height * 0.5f, -1, 10);
     vec target_pos = ent[player_id].pos;
     animate_v2_to_d(&camera_pos, target_pos, dt, 15.0f);
 
@@ -654,14 +645,10 @@ void update_bullets(void)
 
 Bool is_out_of_screen(vec origin, vec pos, float factor)
 {
-    // factor 1 == size of the screen, and 0.5f half of it, etc
-    float mul = 1/cfg.zoom;
-    int VIEW_WIDTH  = window.width *mul;
-    int VIEW_HEIGHT = window.height*mul;
-    float lb = origin.x - VIEW_WIDTH/2  * factor;
-    float rb = origin.x + VIEW_WIDTH/2  * factor;
-    float tb = origin.y - VIEW_HEIGHT/2 * factor;
-    float bb = origin.y + VIEW_HEIGHT/2 * factor;
+    float lb = origin.x - outer_spawn_box.x * factor;
+    float rb = origin.x + outer_spawn_box.x * factor;
+    float tb = origin.y - outer_spawn_box.y * factor;
+    float bb = origin.y + outer_spawn_box.y * factor;
 
     return (pos.x < lb || pos.x > rb || pos.y < tb || pos.y > bb);
 }
@@ -1034,50 +1021,44 @@ void gameloop(void)
 
 void game_init(void)
 {
+    inner_spawn_box = (veci){210, 180};
+    outer_spawn_box = (veci){280, 240};
+    
     srand(time(0));
-
     player_char = (character){
         .weapon = WT_pistol,
         .hp              = 100,
         .speed           = 50,
     };
-
+    
     cur_weapon = weapon_info[player_char.weapon];
-
     bullet_fire_cd = 1.0f / cur_weapon.fire_rate;
-
+    
     font = load_font_from_disk(STR("../dat/fnt/karmina.otf"), get_heap_allocator());
     assert(font, "Failed loading karmina.otf, %d", GetLastError());
-
     player_pos = cfg.player_start_pos;
-
     render_init();
     world_init();
-
     menu_init();
 }
 
 int entry(int argc, char **argv)
 {
     window.title = STR("fatal strike");
-    window.scaled_width = SCREEN_X;
-    window.scaled_height = SCREEN_Y;
+    window.width = SCREEN_X;
+    window.height = SCREEN_Y;
     window.x = 200;
     window.y = 90;
     window.clear_color = hex_to_rgba(0x181818ff);
 
     game_init();
 
-
     while (!window.should_close) {
+        double now = os_get_elapsed_seconds();
         reset_temporary_storage();
         os_update();
-        double now = os_get_elapsed_seconds();
-
         gameloop();
-
         gfx_update();
-
         dt = os_get_elapsed_seconds() - now;
     }
 

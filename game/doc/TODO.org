@@ -12,7 +12,6 @@
 ** DONE implement monster-player collision
 ** DONE add health to player character
 ** DONE make pickups to lerp to player position
-
 ** PARTIAL change fire rate pickups to increase a percent of the base fire rate of each weapon
 pickups are percentage based now but it gets applied to current fire rate instead of base fire rate
 ** TODO add xp
@@ -21,6 +20,8 @@ pickups are percentage based now but it gets applied to current fire rate instea
 ** TODO add win and lose conditions
 ** TODO make fire rate pickups a character buff
 ** TODO Consider implementing tilemap for the world
+** TODO slow down the player when shooting
+** TODO reduce player hp on colision with a monster after a delay and apply monster power to the damage
 
 * Bounties
 ** FIXED tank bullet can miss on obb, even when two sprites clearly overlap
@@ -32,14 +33,17 @@ I think this has nothing to do with special bullets
 ** INVALID sometimes fire rate pickup wraps the fire rate value (sets it to 2 or 4?)
 the whole fire rate logic is wacky and I think it needs reimplementation in a robust way
 actully changing the weapon reset the fire rate to 2... design might change, so I'm going to leave it as is.
+** FIXED repositioning monster can put monsters on a position that needs repositioning again
+so sometimes the repositioning can happen more then 10 times for a monster
+CLOSED: [2024-09-02 Mon]
+I added outer and inner bounds and changed the way repositioning works. but I think the better way is to
+generate a random angle and a randon distance and position the monsters there.
 ** TODO tank bullets apply damage more than once (each frame that it collides with a monster)
 I can have a list of bullets or monsters that collide and ignore them when checking for collision,
 but this feels so unnecessary and inefficient
 bullets can have a list of monsters
 or monsters can have a list of bullets
 what is the alternative?
-** TODO repositioning monster can put monsters on a position that needs repositioning again
-so sometimes the repositioning can happen more then 10 times for a monster
 ** TODO the tank bullets travels at speed of the selected gun
 I just need to add a seperate data structure and logic for all the special bullets and ablities
 ** TODO bullets position is not centered

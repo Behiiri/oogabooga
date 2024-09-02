@@ -294,9 +294,7 @@ void draw_mouse_coordinates(void)
 
 void draw_text_on_screen(int x, int y, float scale,  string str)
 {
-    y = window.scaled_height - y - 18;
-    vec vpos = screen_to_world(x, y);
-    Vector2 pos = vec_to_v2(vpos);
+    Vector2 pos = v2(x, y);
     draw_text(font, str, font_height, pos, v2(scale, scale), COLOR_WHITE);
 }
 
@@ -304,9 +302,10 @@ void draw_info(void)
 {
     float s = 0.1f;
     int fh = font_height;
-    int p = 15;
+    int p = 3;
     int o = 0;
-
+    int h = 180 - 5; // @hardcoded 180 is height of screen space
+    
     static float temp_fps, temp_dt;
     static double last_info_update_time = 0;
     if(world_timer - last_info_update_time > 0.1f)
@@ -316,17 +315,17 @@ void draw_info(void)
         temp_dt = dt;
     }
 
-    draw_text_on_screen(0, (p+fh*s)*o++, s, tprint(STR("fps:  %.2f  dt: %f"), temp_fps, temp_dt));
-    //draw_text_on_screen(0, (p+fh*s)*o++, s, tprint(STR("max_tile_id:  %d"), max_tile_id));
-    //draw_text_on_screen(0, (p+fh*s)*o++, s, tprint(STR("max_bullet_id:  %d"), max_bullet_id));
-    //draw_text_on_screen(0, (p+fh*s)*o++, s, tprint(STR("max_entity_id:  %d"), max_entity_id));
-    draw_text_on_screen(0, (p+fh*s)*o++, s, tprint(STR("time:  %f"), world_timer));
-    draw_text_on_screen(0, (p+fh*s)*o++, s, tprint(STR("fire_rate:  %f"), 1.0f/bullet_fire_cd));
+    draw_text_on_screen(0, h-(p+fh*s)*o++, s, tprint(STR("fps:  %.2f  dt: %f"), temp_fps, temp_dt));
+    //draw_text_on_screen(0, (p-fh*s)*o++, s, tprint(STR("max_tile_id:  %d"), max_tile_id));
+    //draw_text_on_screen(0, (p-fh*s)*o++, s, tprint(STR("max_bullet_id:  %d"), max_bullet_id));
+    //draw_text_on_screen(0, (p-fh*s)*o++, s, tprint(STR("max_entity_id:  %d"), max_entity_id));
+    draw_text_on_screen(0, h-(p+fh*s)*o++, s, tprint(STR("time:  %f"), world_timer));
+    draw_text_on_screen(0, h-(p+fh*s)*o++, s, tprint(STR("fire_rate:  %f"), 1.0f/bullet_fire_cd));
 
-    draw_text_on_screen(0, (p+fh*s)*o++, s, tprint(STR("tile count:  %d"), max_tile_id - 1));
-    draw_text_on_screen(0, (p+fh*s)*o++, s, tprint(STR("bullet count:  %d"), max_bullet_id - TILE_ENTITY_MAX));
-    draw_text_on_screen(0, (p+fh*s)*o++, s, tprint(STR("entity count:  %d"), max_entity_id - BULLET_ENTITY_MAX));
-    //draw_text_on_screen(0, (p+fh*s)*o++, s, tprint(STR("monster pos:  %f , %f"), ent[BULLET_ENTITY_MAX].pos.x, ent[BULLET_ENTITY_MAX].pos.y));
+    draw_text_on_screen(0, h-(p+fh*s)*o++, s, tprint(STR("tile count:  %d"), max_tile_id - 1));
+    draw_text_on_screen(0, h-(p+fh*s)*o++, s, tprint(STR("bullet count:  %d"), max_bullet_id - TILE_ENTITY_MAX));
+    draw_text_on_screen(0, h-(p+fh*s)*o++, s, tprint(STR("entity count:  %d"), max_entity_id - BULLET_ENTITY_MAX));
+    //draw_text_on_screen(0, (p-fh*s)*o++, s, tprint(STR("monster pos:  %f , %f"), ent[BULLET_ENTITY_MAX].pos.x, ent[BULLET_ENTITY_MAX].pos.y));
 }
 
 extern int special_ammo;
@@ -355,8 +354,8 @@ void render_ui(void)
         string str = tprint(STR("%d"), special_ammo);
         Gfx_Text_Metrics str_metrics = measure_text(font, str, fh, v2(scale, scale));
 
-        pos.y = pos.y -sz.y/2;
-        pos.x = pos.x +sz.x/2 - str_metrics.functional_size.x/2.0f;
+        pos.y = pos.y - sz.y/2;
+        pos.x = pos.x + sz.x/2 - str_metrics.functional_size.x/2.0f;
 
         draw_text(font, str, fh, pos, v2(scale, scale), COLOR_WHITE);
     }
@@ -380,9 +379,12 @@ void render_ui(void)
         float scale = 0.25;
         string str = tprint(STR("time:  %4.2f"), world_timer);
         Gfx_Text_Metrics str_metrics = measure_text(font, STR("time:  8888.88"), fh, v2(scale, scale));
-        int y = window.height/20 + str_metrics.functional_size.y;
-        int x = window.width/2 - str_metrics.functional_size.x;
+        //int y = h/20 + str_metrics.functional_size.y;
+        //int x = w/2 - str_metrics.functional_size.x;
 
+        int y = h - str_metrics.functional_size.y - 10;
+        int x = w/2 - str_metrics.functional_size.x/2;
+        
         draw_text_on_screen(x, y, scale, str);
     }
 

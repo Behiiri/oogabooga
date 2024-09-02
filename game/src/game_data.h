@@ -31,7 +31,7 @@ typedef struct { float x,y,z,w; } vec4;
 typedef struct { vec3 m[3]    ; } mat3;
 typedef struct { vec4 m[4]    ; } mat4;
 typedef struct { float x,y,z,w; } quat;
-typedef struct { int x,y      ; } vec2i;
+typedef struct { int x,y      ; } veci;
 
 typedef int entity_id;
 
@@ -278,5 +278,8 @@ typedef struct
 #define MAX_DAMAGE_TEXTS 256
 extern int max_damage_text_id;
 extern game_text damage_texts[MAX_DAMAGE_TEXTS];
+
+#define SCREEN_X (1280.0f/3*2)
+#define SCREEN_Y  (720.0f/3*2)
 
 #endif
