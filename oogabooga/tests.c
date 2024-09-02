@@ -591,6 +591,9 @@ void test_file_io() {
 bool floats_roughly_match(float a, float b) {
 	return fabs(a - b) < 0.01;
 }
+bool floats_roughly_match64(float64 a, float64 b) {
+	return fabs(a - b) < 0.01;
+}
 void test_simd() {
 
 	
@@ -841,6 +844,147 @@ void test_simd() {
 // Indirect testing of some simd stuff
 void test_linmath() {
 
+
+	{
+		// Test v2f32
+	    Vector2f32 v2f32_res = v2f32(1.0f, 2.0f);
+	    assert(v2f32_res.x == 1.0f && v2f32_res.y == 2.0f, "Failed: v2f32");
+	
+	    // Test v3f32
+	    Vector3f32 v3f32_res = v3f32(1.0f, 2.0f, 3.0f);
+	    assert(v3f32_res.x == 1.0f && v3f32_res.y == 2.0f && v3f32_res.z == 3.0f, "Failed: v3f32");
+	
+	    // Test v4f32
+	    Vector4f32 v4f32_res = v4f32(1.0f, 2.0f, 3.0f, 4.0f);
+	    assert(v4f32_res.x == 1.0f && v4f32_res.y == 2.0f && v4f32_res.z == 3.0f && v4f32_res.w == 4.0f, "Failed: v4f32");
+	
+	    // Test scalar vector constructors
+	    v2f32_res = v2f32_scalar(1.0f);
+	    assert(v2f32_res.x == 1.0f && v2f32_res.y == 1.0f, "Failed: v2f32_scalar");
+	
+	    v3f32_res = v3f32_scalar(1.0f);
+	    assert(v3f32_res.x == 1.0f && v3f32_res.y == 1.0f && v3f32_res.z == 1.0f, "Failed: v3f32_scalar");
+	
+	    v4f32_res = v4f32_scalar(1.0f);
+	    assert(v4f32_res.x == 1.0f && v4f32_res.y == 1.0f && v4f32_res.z == 1.0f && v4f32_res.w == 1.0f, "Failed: v4f32_scalar");
+	
+	    // Test vector addition
+	    v2f32_res = v2f32_add(v2f32(1.0f, 2.0f), v2f32(3.0f, 4.0f));
+	    assert(v2f32_res.x == 4.0f && v2f32_res.y == 6.0f, "Failed: v2f32_add");
+	
+	    v3f32_res = v3f32_add(v3f32(1.0f, 2.0f, 3.0f), v3f32(4.0f, 5.0f, 6.0f));
+	    assert(v3f32_res.x == 5.0f && v3f32_res.y == 7.0f && v3f32_res.z == 9.0f, "Failed: v3f32_add");
+	
+	    v4f32_res = v4f32_add(v4f32(1.0f, 2.0f, 3.0f, 4.0f), v4f32(5.0f, 6.0f, 7.0f, 8.0f));
+	    assert(v4f32_res.x == 6.0f && v4f32_res.y == 8.0f && v4f32_res.z == 10.0f && v4f32_res.w == 12.0f, "Failed: v4f32_add");
+	
+	    // Test vector subtraction
+	    v2f32_res = v2f32_sub(v2f32(3.0f, 4.0f), v2f32(1.0f, 2.0f));
+	    assert(v2f32_res.x == 2.0f && v2f32_res.y == 2.0f, "Failed: v2f32_sub");
+	
+	    v3f32_res = v3f32_sub(v3f32(4.0f, 5.0f, 6.0f), v3f32(1.0f, 2.0f, 3.0f));
+	    assert(v3f32_res.x == 3.0f && v3f32_res.y == 3.0f && v3f32_res.z == 3.0f, "Failed: v3f32_sub");
+	
+	    v4f32_res = v4f32_sub(v4f32(5.0f, 6.0f, 7.0f, 8.0f), v4f32(1.0f, 2.0f, 3.0f, 4.0f));
+	    assert(v4f32_res.x == 4.0f && v4f32_res.y == 4.0f && v4f32_res.z == 4.0f && v4f32_res.w == 4.0f, "Failed: v4f32_sub");
+	
+	    // Test vector multiplication
+	    v2f32_res = v2f32_mul(v2f32(2.0f, 3.0f), v2f32(4.0f, 5.0f));
+	    assert(v2f32_res.x == 8.0f && v2f32_res.y == 15.0f, "Failed: v2f32_mul");
+	
+	    v3f32_res = v3f32_mul(v3f32(2.0f, 3.0f, 4.0f), v3f32(5.0f, 6.0f, 7.0f));
+	    assert(v3f32_res.x == 10.0f && v3f32_res.y == 18.0f && v3f32_res.z == 28.0f, "Failed: v3f32_mul");
+	
+	    v4f32_res = v4f32_mul(v4f32(2.0f, 3.0f, 4.0f, 5.0f), v4f32(6.0f, 7.0f, 8.0f, 9.0f));
+	    assert(v4f32_res.x == 12.0f && v4f32_res.y == 21.0f && v4f32_res.z == 32.0f && v4f32_res.w == 45.0f, "Failed: v4f32_mul");
+	
+	    // Test vector division
+	    v2f32_res = v2f32_div(v2f32(6.0f, 8.0f), v2f32(2.0f, 4.0f));
+	    assert(v2f32_res.x == 3.0f && v2f32_res.y == 2.0f, "Failed: v2f32_div");
+	
+	    v3f32_res = v3f32_div(v3f32(12.0f, 15.0f, 18.0f), v3f32(4.0f, 5.0f, 6.0f));
+	    assert(v3f32_res.x == 3.0f && v3f32_res.y == 3.0f && v3f32_res.z == 3.0f, "Failed: v3f32_div");
+	
+	    v4f32_res = v4f32_div(v4f32(20.0f, 24.0f, 28.0f, 32.0f), v4f32(4.0f, 6.0f, 7.0f, 8.0f));
+	    assert(v4f32_res.x == 5.0f && v4f32_res.y == 4.0f && v4f32_res.z == 4.0f && v4f32_res.w == 4.0f, "Failed: v4f32_div");
+	
+	    // Test vector dot product
+	    float32 dot_res = v2f32_dot(v2f32(1.0f, 2.0f), v2f32(3.0f, 4.0f));
+	    assert(dot_res == 11.0f, "Failed: v2f32_dot");
+	
+	    dot_res = v3f32_dot(v3f32(1.0f, 2.0f, 3.0f), v3f32(4.0f, 5.0f, 6.0f));
+	    assert(dot_res == 32.0f, "Failed: v3f32_dot");
+	
+	    // Test vector cross product
+	    float32 cross_res = v2f32_cross(v2f32(1.0f, 2.0f), v2f32(3.0f, 4.0f));
+	    assert(cross_res == -2.0f, "Failed: v2f32_cross");
+	
+	    Vector3f32 cross_v3_res = v3f32_cross(v3f32(1.0f, 2.0f, 3.0f), v3f32(4.0f, 5.0f, 6.0f));
+	    assert(cross_v3_res.x == -3.0f && cross_v3_res.y == 6.0f && cross_v3_res.z == -3.0f, "Failed: v3f32_cross");
+	
+	    // Test length calculation
+	    float32 length_res = v2f32_length(v2f32(3.0f, 4.0f));
+	    assert(length_res == 5.0f, "Failed: v2f32_length");
+	
+	    length_res = v3f32_length(v3f32(1.0f, 2.0f, 2.0f));
+	    assert(length_res == 3.0f, "Failed: v3f32_length");
+	
+	    length_res = v4f32_length(v4f32(2.0f, 2.0f, 2.0f, 2.0f));
+	    assert(length_res == 4.0f, "Failed: v4f32_length");
+	
+	    // Test vector normalization
+	    v2f32_res = v2f32_normalize(v2f32(3.0f, 4.0f));
+	    assert(fabs(v2f32_res.x - 0.6f) < 0.0001f && fabs(v2f32_res.y - 0.8f) < 0.0001f, "Failed: v2f32_normalize");
+	
+	    v3f32_res = v3f32_normalize(v3f32(1.0f, 2.0f, 2.0f));
+	    assert(fabs(v3f32_res.x - 1.0f/3.0f) < 0.0001f && fabs(v3f32_res.y - 2.0f/3.0f) < 0.0001f && fabs(v3f32_res.z - 2.0f/3.0f) < 0.0001f, "Failed: v3f32_normalize");
+	
+	    // Test vector conversions
+	    Vector2f32 conv_v2f32 = v2f64_to_v2f32(v2f64(1.0, 2.0));
+	    assert(conv_v2f32.x == 1.0f && conv_v2f32.y == 2.0f, "Failed: v2f64_to_v2f32");
+	
+	    conv_v2f32 = v2s64_to_v2f32(v2s64(1, 2));
+	    assert(conv_v2f32.x == 1.0f && conv_v2f32.y == 2.0f, "Failed: v2s64_to_v2f32");
+	
+	    Vector3f32 conv_v3f32 = v3f64_to_v3f32(v3f64(1.0, 2.0, 3.0));
+	    assert(conv_v3f32.x == 1.0f && conv_v3f32.y == 2.0f && conv_v3f32.z == 3.0f, "Failed: v3f64_to_v3f32");
+	
+	    Vector4f32 conv_v4f32 = v4f64_to_v4f32(v4f64(1.0, 2.0, 3.0, 4.0));
+	    assert(conv_v4f32.x == 1.0f && conv_v4f32.y == 2.0f && conv_v4f32.z == 3.0f && conv_v4f32.w == 4.0f, "Failed: v4f64_to_v4f32");
+	    
+	    Vector2s32 conv_v2s32 = v2f32_to_v2s32(v2f32(1.0f, 2.0f));
+	    assert(conv_v2s32.x == 1 && conv_v2s32.y == 2, "Failed: v2f32_to_v2s32");
+	
+	    conv_v2s32 = v2s64_to_v2s32(v2s64(1, 2));
+	    assert(conv_v2s32.x == 1 && conv_v2s32.y == 2, "Failed: v2s64_to_v2s32");
+	
+	    Vector3s32 conv_v3s32 = v3f32_to_v3s32(v3f32(1.0f, 2.0f, 3.0f));
+	    assert(conv_v3s32.x == 1 && conv_v3s32.y == 2 && conv_v3s32.z == 3, "Failed: v3f32_to_v3s32");
+	
+	    Vector4s32 conv_v4s32 = v4f32_to_v4s32(v4f32(1.0f, 2.0f, 3.0f, 4.0f));
+	    assert(conv_v4s32.x == 1 && conv_v4s32.y == 2 && conv_v4s32.z == 3 && conv_v4s32.w == 4, "Failed: v4f32_to_v4s32");
+	
+	    Vector2s64 conv_v2s64 = v2f32_to_v2s64(v2f32(1.0f, 2.0f));
+	    assert(conv_v2s64.x == 1 && conv_v2s64.y == 2, "Failed: v2f32_to_v2s64");
+	
+	    conv_v2s64 = v2f64_to_v2s64(v2f64(1.0, 2.0));
+	    assert(conv_v2s64.x == 1 && conv_v2s64.y == 2, "Failed: v2f64_to_v2s64");
+	
+	    Vector3s64 conv_v3s64 = v3f32_to_v3s64(v3f32(1.0f, 2.0f, 3.0f));
+	    assert(conv_v3s64.x == 1 && conv_v3s64.y == 2 && conv_v3s64.z == 3, "Failed: v3f32_to_v3s64");
+	
+	    Vector4s64 conv_v4s64 = v4f32_to_v4s64(v4f32(1.0f, 2.0f, 3.0f, 4.0f));
+	    assert(conv_v4s64.x == 1 && conv_v4s64.y == 2 && conv_v4s64.z == 3 && conv_v4s64.w == 4, "Failed: v4f32_to_v4s64");
+	    
+	    float v2f64_dot_product = v2f64_dot(v2f64(2, 7), v2f64(3, 2));
+	    float v3f64_dot_product = v3f64_dot(v3f64(2, 7, 2), v3f64(3, 2, 9));
+	    float v4f64_dot_product = v4f64_dot(v4f64(2, 7, 6, 1), v4f64(3, 2, 1, 4));
+	    
+	    assert(floats_roughly_match64(v2f64_dot_product, 20), "Failed: v2f64_dot");
+		assert(floats_roughly_match64(v3f64_dot_product, 38), "Failed: v3f64_dot");
+		assert(floats_roughly_match64(v4f64_dot_product, 30), "Failed: v4f64_dot");
+	}
+	
     // Test vector creation and access
     Vector2 v2_test = v2(1.0f, 2.0f);
     assert(v2_test.x == 1.0f && v2_test.y == 2.0f, "v2 creation incorrect");
@@ -1423,6 +1567,137 @@ void test_growing_array() {
     assert(growing_array_get_valid_count(things) == 99, "Failed: growing_array_get_valid_count");
 }
 
+
+typedef struct {
+    Binary_Semaphore *sem;
+    volatile LONG *counter;
+    int increments;
+} Test_Args;
+
+void increment_thread_proc(Thread *t) {
+    Test_Args *test_args = (Test_Args *)t->data;
+    for (int i = 0; i < test_args->increments; i++) {
+        os_binary_semaphore_wait(test_args->sem);
+        InterlockedIncrement(test_args->counter);
+        os_binary_semaphore_signal(test_args->sem);
+    }
+}
+void test_os_binary_semaphore() {
+    {
+        // Multithreaded increment test
+        const int num_threads = 100;
+        const int increments_per_thread = 10000;
+
+        Binary_Semaphore sem;
+        os_binary_semaphore_init(&sem, true);
+
+        LONG counter = 0;
+        Thread threads[num_threads];
+        Test_Args args = { &sem, &counter, increments_per_thread };
+
+        for (int i = 0; i < num_threads; i++) {
+            os_thread_init(&threads[i], increment_thread_proc);
+            threads[i].data = &args;
+            os_thread_start(&threads[i]);
+        }
+
+        for (int i = 0; i < num_threads; i++) {
+            os_thread_join(&threads[i]);
+            os_thread_destroy(&threads[i]);
+        }
+
+        assert(counter == num_threads * increments_per_thread, "Failed: Multithreaded increment test");
+
+        os_binary_semaphore_destroy(&sem);
+    }
+
+    {
+        // Signal before wait test
+        Binary_Semaphore sem;
+        os_binary_semaphore_init(&sem, false);
+
+        LONG counter = 0;
+
+        Thread thread;
+        Test_Args args = { &sem, &counter, 1 };
+        os_thread_init(&thread, increment_thread_proc);
+        thread.data = &args;
+        os_thread_start(&thread);
+
+        // Signal the semaphore after a delay
+        Sleep(100);
+        os_binary_semaphore_signal(&sem);
+
+        os_thread_join(&thread);
+        os_thread_destroy(&thread);
+
+        assert(counter == 1, "Failed: Signal before wait test");
+
+        os_binary_semaphore_destroy(&sem);
+    }
+
+    {
+        // High contention test
+        const int num_threads = 100;
+        const int increments_per_thread = 1000;
+
+        Binary_Semaphore sem;
+        os_binary_semaphore_init(&sem, true);
+
+        LONG counter = 0;
+        Thread threads[num_threads];
+        Test_Args args = { &sem, &counter, increments_per_thread };
+
+        for (int i = 0; i < num_threads; i++) {
+            os_thread_init(&threads[i], increment_thread_proc);
+            threads[i].data = &args;
+            os_thread_start(&threads[i]);
+        }
+
+        for (int i = 0; i < num_threads; i++) {
+            os_thread_join(&threads[i]);
+            os_thread_destroy(&threads[i]);
+        }
+
+        assert(counter == num_threads * increments_per_thread, "Failed: High contention test");
+
+        os_binary_semaphore_destroy(&sem);
+    }
+
+    {
+        // Double signal test
+        Binary_Semaphore sem;
+        os_binary_semaphore_init(&sem, false);
+
+        LONG counter = 0;
+
+        Thread thread1, thread2;
+        Test_Args args1 = { &sem, &counter, 1 };
+        Test_Args args2 = { &sem, &counter, 1 };
+
+        os_thread_init(&thread1, increment_thread_proc);
+        os_thread_init(&thread2, increment_thread_proc);
+        thread1.data = &args1;
+        thread2.data = &args2;
+        os_thread_start(&thread1);
+        os_thread_start(&thread2);
+
+        // Signal twice
+        os_binary_semaphore_signal(&sem);
+        os_binary_semaphore_signal(&sem);
+
+        os_thread_join(&thread1);
+        os_thread_join(&thread2);
+
+        assert(counter == 2, "Failed: Double signal test");
+
+        os_thread_destroy(&thread1);
+        os_thread_destroy(&thread2);
+        os_binary_semaphore_destroy(&sem);
+    }
+
+}
+
 void oogabooga_run_tests() {
 	
 	print("Testing growing array... ");
@@ -1467,6 +1742,10 @@ void oogabooga_run_tests() {
 	
 	print("Testing mutex... ");
 	test_mutex();
+	print("OK!\n");
+	
+	print("Testing binary semaphore... ");
+	test_os_binary_semaphore();
 	print("OK!\n");
 
 #ifndef OOGABOOGA_HEADLESS
