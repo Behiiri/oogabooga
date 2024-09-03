@@ -22,6 +22,7 @@ pickups are percentage based now but it gets applied to current fire rate instea
 ** TODO Consider implementing tilemap for the world
 ** TODO slow down the player when shooting
 ** TODO reduce player hp on colision with a monster after a delay and apply monster power to the damage
+** TODO implement better drop system
 
 * Bounties
 ** FIXED tank bullet can miss on obb, even when two sprites clearly overlap

@@ -1,6 +1,6 @@
 #include "game_funcs.h"
 
-monster monster_info[MONSTER_COUNT + 1] =
+monster monster_info[MONSTER_SPRITES_COUNT + 1] =
 {
 //     type       hp     power speed
 //  { ET__none,   999,   99,   99 },

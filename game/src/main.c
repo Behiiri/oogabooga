@@ -25,6 +25,7 @@ static int kill_count;
 static veci inner_spawn_box;
 static veci outer_spawn_box;
 
+
 config cfg = {
     .zoom = 2.5f,
     .player_speed = 75.0f,
@@ -85,12 +86,10 @@ range ent_to_range(entity_id id)
 obb ent_to_obb(entity_id id)
 {
     obb o;
-    vec s = ent[id].size;
-    vec p = ent[id].pos;
-    o.u = ent[id].u;
-    o.c = vec2(p.x + s.x/2, p.y + s.y/2);
-    //o.c = vec_rotate_u(o.c, p, o.u);
-    o.e = vec2(s.x/2, s.y/2);
+    entity *e = &ent[id];
+    o.u = e->u;
+    o.c = vec2(e->x + e->w/2, e->y + e->h/2);
+    o.e = vec2(e->w/2, e->h/2);
     return o;
 }
 
@@ -106,7 +105,8 @@ Bool check_range_collision_by_id(entity_id id_a, entity_id id_b)
     return check_range_collision(a, b);
 }
 
-Bool check_obb_collision(obb* o1, obb* o2) {
+Bool check_obb_collision(obb* o1, obb* o2)
+{
     o1->c = vec_rotate_u(o1->c, vec2(o1->c.x-o1->e.x, o1->c.y-o1->e.y), o1->u);
     o2->c = vec_rotate_u(o2->c, vec2(o2->c.x-o2->e.x, o2->c.y-o2->e.y), o2->u);
     // monsters has no rotation so thier dir is (0,0)
@@ -248,15 +248,18 @@ Bool resolve_overlap(int ent_a, int ent_b)
     return true;
 }
 
-int get_random_int(void) {
+int get_random_int(void)
+{
     return rand();
 }
 
-int get_random_int_range(int min, int max) {
+int get_random_int_range(int min, int max)
+{
     return min + rand() % (max - min + 1);
 }
 
-float get_random_float_range(float min, float max) {
+float get_random_float_range(float min, float max)
+{
     return min + ((float)rand() / RAND_MAX) * (max - min);
 }
 
@@ -265,7 +268,8 @@ Vector2 vec_to_v2(vec v)
     return (Vector2){v.x, v.y};
 }
 
-Bool almost_equals(float a, float b, float epsilon) {
+Bool almost_equals(float a, float b, float epsilon)
+{
     return fabs(a - b) <= epsilon;
 }
 
@@ -285,7 +289,8 @@ void animate_v2_to_d(vec* v, vec d, float dt, float t)
     animate_f32_to_d(&(v->y), d.y, dt, t);
 }
 
-Bool move_towards(vec* v, vec d, float dt, float t) {
+Bool move_towards(vec* v, vec d, float dt, float t)
+{
     vec dir;
     dir.x = d.x - v->x;
     dir.y = d.y - v->y;
@@ -319,6 +324,9 @@ vec screen_to_world(float x, float y)
 
     return (vec) {world_pos.x, world_pos.y};
 }
+
+extern veci inner_spawn_box;
+extern veci outer_spawn_box;
 
 vec get_random_pos_on_side(vec origin, int side)
 {
@@ -360,10 +368,10 @@ vec get_random_spawn_pos(vec origin)
 vec reposition_monster(vec player_pos, vec pos)
 {
     int side = -1;
-    float lb = player_pos.x - inner_spawn_box.x;
-    float rb = player_pos.x + inner_spawn_box.x;
-    float tb = player_pos.y + inner_spawn_box.y;
-    float bb = player_pos.y - inner_spawn_box.y;
+    float lb = player_pos.x - outer_spawn_box.x;
+    float rb = player_pos.x + outer_spawn_box.x;
+    float tb = player_pos.y + outer_spawn_box.y;
+    float bb = player_pos.y - outer_spawn_box.y;
 
     if (pos.x > rb) side = LEFT;
     if (pos.y < bb) side = UP;
@@ -643,8 +651,9 @@ void update_bullets(void)
     }
 }
 
-Bool is_out_of_screen(vec origin, vec pos, float factor)
+Bool is_out_of_spawn_box(vec origin, vec pos)
 {
+    float factor = 1; // @Remove?
     float lb = origin.x - outer_spawn_box.x * factor;
     float rb = origin.x + outer_spawn_box.x * factor;
     float tb = origin.y - outer_spawn_box.y * factor;
@@ -673,7 +682,7 @@ void update_entities(void)
                     en->valid = 0;
                     kill_count++;
                     int rand = get_random_int_range(0, 100);
-                    if(rand < 3) // @hardcoded 3 percent chance of dropping a pickup
+                    if(rand < DROP_CHANCE) // @hardcoded 3 percent chance of dropping a pickup
                     {
                         rand = get_random_int_range(0, 6);
                         if (rand < 2) {
@@ -689,7 +698,7 @@ void update_entities(void)
                     create_monster_in_random_side(type, player_pos);
                 }
 
-                if (is_out_of_screen(ent[player_id].pos, en->pos, 1.5f)) // @hardcoded
+                if (is_out_of_spawn_box(ent[player_id].pos, en->pos))
                 {
                     vec pos = reposition_monster(ent[player_id].pos, en->pos);
                     en->pos = pos;
@@ -863,8 +872,7 @@ void process_debug_input(void)
         is_rmb_down = False;
     }
 
-    if (is_rmb_down)
-    {
+    if (is_rmb_down) {
         float mouse_x = input_frame.mouse_x;
         float mouse_y = input_frame.mouse_y;
         vec pos = screen_to_world(mouse_x, mouse_y);
@@ -1021,9 +1029,6 @@ void gameloop(void)
 
 void game_init(void)
 {
-    inner_spawn_box = (veci){210, 180};
-    outer_spawn_box = (veci){280, 240};
-    
     srand(time(0));
     player_char = (character){
         .weapon = WT_pistol,
@@ -1036,7 +1041,14 @@ void game_init(void)
     
     font = load_font_from_disk(STR("../dat/fnt/karmina.otf"), get_heap_allocator());
     assert(font, "Failed loading karmina.otf, %d", GetLastError());
+
     player_pos = cfg.player_start_pos;
+
+    inner_spawn_box = (veci){180, 120};
+    outer_spawn_box = (veci){240, 160};
+    assert(inner_spawn_box.x < outer_spawn_box.x);
+    assert(inner_spawn_box.y < outer_spawn_box.y);
+
     render_init();
     world_init();
     menu_init();

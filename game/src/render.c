@@ -63,9 +63,8 @@ void render_init(void)
     }
 }
 
-void draw_outline_rect(Vector2 a, Vector2 b, Vector2 c, Vector2 d, Vector4 color)
+void draw_outline_rect(Vector2 a, Vector2 b, Vector2 c, Vector2 d, float s, Vector4 color)
 {
-    float s = 0.5;
     draw_line(a, b, s, color);
     draw_line(b, c, s, color);
     draw_line(c, d, s, color);
@@ -78,7 +77,7 @@ void draw_aabb(box b)
     Vector2 p1 = v2(b.min.x, b.max.y);
     Vector2 p2 = v2(b.max.x, b.max.y);
     Vector2 p3 = v2(b.max.x, b.min.y);
-    draw_outline_rect(p0, p1, p2, p3, v4(0.2, 0.2, 0.2, 1.0));
+    draw_outline_rect(p0, p1, p2, p3, 0.5f, v4(0.2, 0.2, 0.2, 1.0));
 }
 
 
@@ -143,7 +142,7 @@ void draw_obb(obb o)
     p1 = v2_rotate_u(p1, p0, o.u);
     p2 = v2_rotate_u(p2, p0, o.u);
     p3 = v2_rotate_u(p3, p0, o.u);
-    draw_outline_rect(p0, p1, p2, p3, v4(1,1,0,1));
+    draw_outline_rect(p0, p1, p2, p3, 0.5f, v4(1,1,0,1));
     draw_circle(v2(p0.x-0.5f, p0.y-0.5f), v2(1,1), COLOR_RED);
 }
 
@@ -153,6 +152,40 @@ void draw_bullet_debug_details()
     for (i=TILE_ENTITY_MAX; i<max_bullet_id; ++i)
         if (ent[i].valid)
             draw_obb(ent_to_obb(i));
+}
+
+extern veci inner_spawn_box;
+extern veci outer_spawn_box;
+void draw_spawn_bounds()
+{
+    // inner
+    {
+        box b = {
+            (vec) { ent[0].x - inner_spawn_box.x, ent[0].y - inner_spawn_box.y },
+            (vec) { ent[0].x + inner_spawn_box.x, ent[0].y + inner_spawn_box.y }
+        };
+        
+        Vector2 p0 = v2(b.min.x, b.min.y);
+        Vector2 p1 = v2(b.min.x, b.max.y);
+        Vector2 p2 = v2(b.max.x, b.max.y);
+        Vector2 p3 = v2(b.max.x, b.min.y);
+        draw_outline_rect(p0, p1, p2, p3, 1.0f, v4(0.8, 0.8, 0.2, 1.0));
+    }
+
+    // outer
+    {
+        box b = {
+            (vec) { ent[0].x - outer_spawn_box.x, ent[0].y - outer_spawn_box.y },
+            (vec) { ent[0].x + outer_spawn_box.x, ent[0].y + outer_spawn_box.y }
+        };
+        
+        Vector2 p0 = v2(b.min.x, b.min.y);
+        Vector2 p1 = v2(b.min.x, b.max.y);
+        Vector2 p2 = v2(b.max.x, b.max.y);
+        Vector2 p3 = v2(b.max.x, b.min.y);
+        draw_outline_rect(p0, p1, p2, p3, 1.0f, v4(0.8, 0.2, 0.2, 1.0));
+    }
+
 }
 
 extern vec player_pos;
@@ -242,12 +275,15 @@ void render_tiles(void)
         float window_w = window.width;
         float window_h = window.height;
 
+        //float fac = cfg.zoom;
+        float fac = 4;
+
         Vector2 sz = v2(TILE_SIZE, TILE_SIZE);
         vec p_pos = ent[0].pos;
         int p_tile_x = world_to_tile_pos(p_pos.x);
         int p_tile_y = world_to_tile_pos(p_pos.y);
-        int max_i = (window_w / cfg.zoom / TILE_SIZE) + 1;
-        int max_j = (window_h / cfg.zoom / TILE_SIZE) + 1;
+        int max_i = (window_w / fac / TILE_SIZE) + 1;
+        int max_j = (window_h / fac / TILE_SIZE) + 1;
 
         // log("%d, %d", max_i, max_j);
         int i, j;
@@ -258,8 +294,7 @@ void render_tiles(void)
 
                 if ((tile_x + tile_y) % 2 == 0)
                 {
-                    Vector2 pos = v2(tile_x * TILE_SIZE,
-                                     tile_y * TILE_SIZE);
+                    Vector2 pos = v2(tile_x * TILE_SIZE, tile_y * TILE_SIZE);
                     draw_rect(pos, sz, (Vector4){0.2f, 0.2f, 0.3f, 0.2f});
                 }
             }
@@ -322,10 +357,9 @@ void draw_info(void)
     draw_text_on_screen(0, h-(p+fh*s)*o++, s, tprint(STR("time:  %f"), world_timer));
     draw_text_on_screen(0, h-(p+fh*s)*o++, s, tprint(STR("fire_rate:  %f"), 1.0f/bullet_fire_cd));
 
-    draw_text_on_screen(0, h-(p+fh*s)*o++, s, tprint(STR("tile count:  %d"), max_tile_id - 1));
+    draw_text_on_screen(0, h-(p+fh*s)*o++, s, tprint(STR("tile count:  %d"), max_tile_id));
     draw_text_on_screen(0, h-(p+fh*s)*o++, s, tprint(STR("bullet count:  %d"), max_bullet_id - TILE_ENTITY_MAX));
     draw_text_on_screen(0, h-(p+fh*s)*o++, s, tprint(STR("entity count:  %d"), max_entity_id - BULLET_ENTITY_MAX));
-    //draw_text_on_screen(0, (p-fh*s)*o++, s, tprint(STR("monster pos:  %f , %f"), ent[BULLET_ENTITY_MAX].pos.x, ent[BULLET_ENTITY_MAX].pos.y));
 }
 
 extern int special_ammo;
@@ -566,7 +600,9 @@ void render_game(void)
         draw_monster_debug_details();
         draw_bullet_debug_details();
     }
-        
+    
+    draw_spawn_bounds();
+    
     render_game_texts();
     
     render_ui();

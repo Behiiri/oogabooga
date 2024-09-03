@@ -40,19 +40,19 @@ void world_init(void)
         set_entity_size(player_id);
     }
 
-    // ground tiles
-    int sz_x = TILE_SIZE;
-    int sz_y = TILE_SIZE;
+    // // ground tiles
+    // int sz_x = TILE_SIZE;
+    // int sz_y = TILE_SIZE;
     int i, j;
-    for (i = 0; i<50; ++i)
-        for (j = 0; j<50;++j) {
-            vec pos = {i * sz_x, j * sz_y};
-            int id = create_tile(ET_ground3, pos);
-        }
+    // for (i = 0; i<50; ++i)
+    //     for (j = 0; j<50;++j) {
+    //         vec pos = {i * sz_x, j * sz_y};
+    //         int id = create_tile(ET_ground3, pos);
+    //     }
 
     // monsters
 #if 1
-    for (i = 0; i<80; ++i) {
+    for (i = 0; i<50; ++i) {
         int type = get_random_int_range(ET__monsters_start, ET__monsters_end);
         create_monster_in_random_side(type, cfg.player_start_pos);
     }

@@ -135,8 +135,8 @@ enum
     ET__pickup_end     = ET_pickup_health
 };
 
-#define BULLETS_COUNT (ET__bullets_end  - ET__bullets_start  + 1)
-#define MONSTER_COUNT (ET__monsters_end - ET__monsters_start + 1)
+#define BULLET_SPRITES_COUNT  (ET__bullets_end  - ET__bullets_start  + 1)
+#define MONSTER_SPRITES_COUNT (ET__monsters_end - ET__monsters_start + 1)
 
 typedef struct
 {
@@ -145,13 +145,6 @@ typedef struct
     int power;
     int speed;
 } monster;
-
-enum
-{
-    BULLET_normal,
-    BULLET_tank,
-    BULLET_smart
-};
 
 enum // fire mode
 {
@@ -212,9 +205,7 @@ extern config cfg;
 #define BULLET_ENTITY_MIN  TILE_ENTITY_MAX
 #define MONSTER_ENTITY_MIN BULLET_ENTITY_MAX
 
-
 extern entity ent[MAX_ENTITIES];
-
 extern entity_id max_entity_id;
 extern entity_id max_tile_id;
 extern entity_id max_bullet_id;
@@ -223,7 +214,6 @@ extern entity_id max_monster_id;
 
 extern int program_mode;
 extern double world_timer;
-
 extern float dt;
 extern double bullet_fire_cd;
 
@@ -281,5 +271,7 @@ extern game_text damage_texts[MAX_DAMAGE_TEXTS];
 
 #define SCREEN_X (1280.0f/3*2)
 #define SCREEN_Y  (720.0f/3*2)
+
+#define DROP_CHANCE 10
 
 #endif
