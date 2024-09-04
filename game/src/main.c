@@ -385,11 +385,18 @@ void change_weapon(int weapon_type)
 {
     player.weapon = weapon_type;
     player.cur_weapon = weapon_info[weapon_type];
+    if(player.weapon_slots[player.weapon].ammo_in_clip == 0)
+    {
+        player.weapon_slots[player.weapon].reload_start = world_timer;
+        player.weapon_slots[player.weapon].reloading = true;
+    }
+    
     bullet_fire_cd = 1.0f/player.cur_weapon.fire_rate;
 }
 
 void next_weapon(void)
 {
+    player.weapon_slots[player.weapon].reloading = false;
     player.weapon++;
     if (player.weapon == WT__count)
         player.weapon = WT_pistol;
@@ -408,16 +415,15 @@ void fire_bullet(void)
     
     weapon_slot *cws = &player.weapon_slots[player.weapon];
 
-    if(cws->reloading) return;
+    if(cws->reloading || cws->ammo_in_clip == 0) return;
 
     if(cws->ammo_in_clip > 0)
         cws->ammo_in_clip--;
-    else {
-        cws->reloading = true;
-        cws->reload_start = world_timer;;
-    }
 
-    if(cws->ammo_in_clip == 0) return;
+    if(cws->ammo_in_clip == 0) {
+        cws->reloading = true;
+        cws->reload_start = world_timer;
+    }
 
     if (player.cur_weapon.fire_mode == FM_normal) {
         vec dir = {mouse_pos.x - (player_pos.x + offset_x), mouse_pos.y - (player_pos.y + offset_y)};
@@ -686,7 +692,6 @@ Bool is_out_of_chase_range(vec origin, vec pos, float range)
     return (distance(origin, pos) > range);
 }
 
-
 void update_entities(void)
 {
     update_bullets();
@@ -701,16 +706,23 @@ void update_entities(void)
                     en->valid = 0;
                     kill_count++;
                     int rand = get_random_int_range(0, 100);
-                    if(rand < DROP_CHANCE) // @hardcoded 3 percent chance of dropping a pickup
-                    {
-                        rand = get_random_int_range(0, 6);
-                        if (rand < 2) {
+                    int AMMO_DROP_CHANCE = DROP_CHANCE + 3;
+                    if(rand < DROP_CHANCE)
+                    {                        
+                        int o = 2;
+                        int c = 2;
+                        rand = get_random_int_range(0, c*3);
+
+                        if (rand < c) {
                             create_entity(ET_pickup_a, en->pos);
-                        } else if (rand >= 2 && rand < 4) {
+                        }else if (rand < c*o++) {
                             create_entity(ET_pickup_s, en->pos);
-                        } else if (rand >= 4 && rand < 6) {
+                        } else if (rand < c*o++) {
                             create_entity(ET_pickup_health, en->pos);
                         }
+                    } else if(rand < AMMO_DROP_CHANCE)
+                    {
+                        create_entity(ET_pickup_m, en->pos);
                     }
 
                     int type = get_random_int_range(ET__monsters_start, ET__monsters_end);
@@ -772,6 +784,9 @@ void update_entities(void)
                             break;
                         case ET_pickup_health:
                             ent[player_id].hp += 20;
+                            break;
+                        case ET_pickup_m:
+                            player.weapon_slots[player.weapon].ammo += 50;
                             break;
                     }
 
@@ -1008,6 +1023,23 @@ void gameloop(void)
     if (program_mode == MODE_game) {
         world_timer += dt;
         update_view();
+        
+        weapon_slot *cws = &player.weapon_slots[player.weapon];
+        if (cws->reloading == true)
+        {
+            if (world_timer - cws->reload_start >
+                weapon_info[player.weapon].reload_time)
+            {
+                cws->reloading = false;
+                if(cws->ammo > weapon_info[player.weapon].clip_size) {
+                    cws->ammo_in_clip = weapon_info[player.weapon].clip_size;
+                    cws->ammo -= weapon_info[player.weapon].clip_size;
+                } else {
+                    cws->ammo_in_clip = cws->ammo;
+                    cws->ammo = 0;
+                }
+            }
+        }
 
         vec input_axis = (vec){0, 0};
         process_game_input(&input_axis);
@@ -1026,23 +1058,6 @@ void gameloop(void)
 
         ent[0].pos.x = player_pos.x;
         ent[0].pos.y = player_pos.y;
-
-        weapon_slot *cws = &player.weapon_slots[player.weapon];
-        if (cws->reloading == true)
-        {
-            if (world_timer - cws->reload_start >
-                weapon_info[player.weapon].reload_time)
-            {
-                cws->reloading = false;
-                if(cws->ammo > weapon_info[player.weapon].clip_size) {
-                    cws->ammo_in_clip = weapon_info[player.weapon].clip_size;
-                    cws->ammo -= weapon_info[player.weapon].clip_size;
-                } else {
-                    cws->ammo_in_clip = cws->ammo;
-                    cws->ammo = 0;
-                }
-            }
-        }
 
         update_entities();
         process_tick_raw(dt); // @TODO move other update related things to this
