@@ -171,6 +171,7 @@ enum // weapon types
 typedef struct
 {
     int type;
+    int slot;
     int icon;
     int bullet_type;
     int bullets_per_shot;
@@ -180,6 +181,9 @@ typedef struct
     int fire_range;
     int min_damage;
     int max_damage;
+    int clip_size;
+    int initial_ammo;
+    float reload_time;
 } weapon;
 
 extern weapon cur_weapon;
@@ -220,15 +224,30 @@ extern double bullet_fire_cd;
 extern entity_id player_id;
 extern int kill_count;
 
+typedef struct {
+    int  weapon_id;
+    int  ammo;
+    int  ammo_in_clip;
+    Bool occupied;
+    Bool reloading;
+    float reload_start;
+} weapon_slot;
+
 typedef struct
 {
-    int   weapon;
+    int level;
+    int xp;
+    weapon_slot weapon_slots[5];
+    weapon cur_weapon;
+    int weapon;
     int   hp;
     float speed;
     // char* name;
     // Gfx_Image* tex;
-    // Gfx_Image* icon;
+    // Gfx_Image* icon ;
 } character;
+
+extern character player;
 
 enum
 {

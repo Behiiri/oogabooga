@@ -18,8 +18,8 @@ static int program_mode = MODE_game;
 static float dt;
 static vec player_pos;
 static vec camera_pos;
-static character player_char;
-static weapon cur_weapon;
+static character player;
+
 static int kill_count;
 
 static veci inner_spawn_box;
@@ -335,7 +335,7 @@ vec get_random_pos_on_side(vec origin, int side)
     int dy = inner_spawn_box.y + rand() % (outer_spawn_box.y - inner_spawn_box.y);
     int ddx = rand() % (outer_spawn_box.x*2);
     int ddy = rand() % (outer_spawn_box.y*2);
-    
+
     switch(side) {
         case LEFT: // 0
             x = origin.x - dx;
@@ -377,17 +377,23 @@ vec reposition_monster(vec player_pos, vec pos)
     if (pos.y < bb) side = UP;
     if (pos.x < lb) side = RIGHT;
     if (pos.y > tb) side = DOWN;
-    
+
     return get_random_pos_on_side(player_pos, side);
+}
+
+void change_weapon(int weapon_type)
+{
+    player.weapon = weapon_type;
+    player.cur_weapon = weapon_info[weapon_type];
+    bullet_fire_cd = 1.0f/player.cur_weapon.fire_rate;
 }
 
 void next_weapon(void)
 {
-    player_char.weapon++;
-    if (player_char.weapon == WT__count)
-        player_char.weapon = WT_pistol;
-    cur_weapon = weapon_info[player_char.weapon];
-    bullet_fire_cd = 1.0f/cur_weapon.fire_rate;
+    player.weapon++;
+    if (player.weapon == WT__count)
+        player.weapon = WT_pistol;
+    change_weapon(player.weapon);
 }
 
 int special_ammo = 10;
@@ -399,21 +405,34 @@ void fire_bullet(void)
 
     float offset_x = ent[player_id].size.x/2;
     float offset_y = ent[player_id].size.y/2;
+    
+    weapon_slot *cws = &player.weapon_slots[player.weapon];
 
-    if (cur_weapon.fire_mode == FM_normal) {
+    if(cws->reloading) return;
+
+    if(cws->ammo_in_clip > 0)
+        cws->ammo_in_clip--;
+    else {
+        cws->reloading = true;
+        cws->reload_start = world_timer;;
+    }
+
+    if(cws->ammo_in_clip == 0) return;
+
+    if (player.cur_weapon.fire_mode == FM_normal) {
         vec dir = {mouse_pos.x - (player_pos.x + offset_x), mouse_pos.y - (player_pos.y + offset_y)};
         float length = sqrt(dir.x * dir.x + dir.y * dir.y);
         if (length == 0) length = 1;
         vec unit_dir = {dir.x / length, dir.y / length};
-        vec velocity = {unit_dir.x * cur_weapon.bullet_speed, unit_dir.y * cur_weapon.bullet_speed};
+        vec velocity = {unit_dir.x * player.cur_weapon.bullet_speed, unit_dir.y * player.cur_weapon.bullet_speed};
 
-        int id = create_bullet(cur_weapon.bullet_type, (vec){player_pos.x + offset_x, player_pos.y + offset_y});
+        int id = create_bullet(player.cur_weapon.bullet_type, (vec){player_pos.x + offset_x, player_pos.y + offset_y});
         ent[id].v = velocity;
         ent[id].u = (vec){unit_dir.x, unit_dir.y};
         return;
     }
 
-    if (cur_weapon.fire_mode == FM_spread) {
+    if (player.cur_weapon.fire_mode == FM_spread) {
         vec dir = {mouse_pos.x - (player_pos.x + offset_x), mouse_pos.y - (player_pos.y + offset_y)};
         float length = sqrt(dir.x * dir.x + dir.y * dir.y);
         if (length == 0) length = 1;
@@ -422,60 +441,60 @@ void fire_bullet(void)
         int id;
         vec bullet_pos;
 
-        if (cur_weapon.bullets_per_shot % 2) // odds
+        if (player.cur_weapon.bullets_per_shot % 2) // odds
         {
             bullet_pos = vec2(player_pos.x + offset_x, player_pos.y + offset_y);
-            id = create_bullet(cur_weapon.bullet_type, bullet_pos);
-            ent[id].v = vec2(unit_dir.x * cur_weapon.bullet_speed, unit_dir.y * cur_weapon.bullet_speed);
+            id = create_bullet(player.cur_weapon.bullet_type, bullet_pos);
+            ent[id].v = vec2(unit_dir.x * player.cur_weapon.bullet_speed, unit_dir.y * player.cur_weapon.bullet_speed);
             ent[id].u = unit_dir;
-        } else if (cur_weapon.bullets_per_shot >= 2)
+        } else if (player.cur_weapon.bullets_per_shot >= 2)
         {
             bullet_pos = vec2(player_pos.x + offset_x, player_pos.y + offset_y);
             vec u = vec_rotate(unit_dir, M_PI/24);
-            id = create_bullet(cur_weapon.bullet_type, bullet_pos);
-            ent[id].v = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
+            id = create_bullet(player.cur_weapon.bullet_type, bullet_pos);
+            ent[id].v = vec2(u.x * player.cur_weapon.bullet_speed, u.y * player.cur_weapon.bullet_speed);
             ent[id].u = u;
 
             u = vec_rotate(unit_dir, -M_PI/24);
-            id = create_bullet(cur_weapon.bullet_type, bullet_pos);
-            ent[id].v = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
+            id = create_bullet(player.cur_weapon.bullet_type, bullet_pos);
+            ent[id].v = vec2(u.x * player.cur_weapon.bullet_speed, u.y * player.cur_weapon.bullet_speed);
             ent[id].u = u;
 
-            if (cur_weapon.bullets_per_shot >= 4) {
+            if (player.cur_weapon.bullets_per_shot >= 4) {
                 vec u = vec_rotate(unit_dir, M_PI/12);
-                id = create_bullet(cur_weapon.bullet_type, bullet_pos);
-                ent[id].v = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
+                id = create_bullet(player.cur_weapon.bullet_type, bullet_pos);
+                ent[id].v = vec2(u.x * player.cur_weapon.bullet_speed, u.y * player.cur_weapon.bullet_speed);
                 ent[id].u = u;
 
                 u = vec_rotate(unit_dir, -M_PI/12);
-                id = create_bullet(cur_weapon.bullet_type, bullet_pos);
-                ent[id].v = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
+                id = create_bullet(player.cur_weapon.bullet_type, bullet_pos);
+                ent[id].v = vec2(u.x * player.cur_weapon.bullet_speed, u.y * player.cur_weapon.bullet_speed);
                 ent[id].u = u;
             }
 
             return;
         }
 
-        if (cur_weapon.bullets_per_shot >= 3) {
+        if (player.cur_weapon.bullets_per_shot >= 3) {
             vec u = vec_rotate(unit_dir, M_PI/12);
-            id = create_bullet(cur_weapon.bullet_type, bullet_pos);
-            ent[id].v = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
+            id = create_bullet(player.cur_weapon.bullet_type, bullet_pos);
+            ent[id].v = vec2(u.x * player.cur_weapon.bullet_speed, u.y * player.cur_weapon.bullet_speed);
             ent[id].u = u;
 
             u = vec_rotate(unit_dir, -M_PI/12);
-            id = create_bullet(cur_weapon.bullet_type, bullet_pos);
-            ent[id].v = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
+            id = create_bullet(player.cur_weapon.bullet_type, bullet_pos);
+            ent[id].v = vec2(u.x * player.cur_weapon.bullet_speed, u.y * player.cur_weapon.bullet_speed);
             ent[id].u = u;
 
-            if (cur_weapon.bullets_per_shot >= 5) {
+            if (player.cur_weapon.bullets_per_shot >= 5) {
                 u = vec_rotate(unit_dir, M_PI/6);
-                id = create_bullet(cur_weapon.bullet_type, bullet_pos);
-                ent[id].v = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
+                id = create_bullet(player.cur_weapon.bullet_type, bullet_pos);
+                ent[id].v = vec2(u.x * player.cur_weapon.bullet_speed, u.y * player.cur_weapon.bullet_speed);
                 ent[id].u = u;
 
                 u = vec_rotate(unit_dir, -M_PI/6);
-                id = create_bullet(cur_weapon.bullet_type, bullet_pos);
-                ent[id].v = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
+                id = create_bullet(player.cur_weapon.bullet_type, bullet_pos);
+                ent[id].v = vec2(u.x * player.cur_weapon.bullet_speed, u.y * player.cur_weapon.bullet_speed);
                 ent[id].u = u;
             }
         }
@@ -483,7 +502,7 @@ void fire_bullet(void)
         return;
     }
 
-    if (cur_weapon.fire_mode == FM_cycle) {
+    if (player.cur_weapon.fire_mode == FM_cycle) {
         vec dir = {mouse_pos.x - (player_pos.x + offset_x), mouse_pos.y - (player_pos.y + offset_y)};
         float length = sqrt(dir.x * dir.x + dir.y * dir.y);
         if (length == 0) length = 1;
@@ -493,48 +512,48 @@ void fire_bullet(void)
         vec bullet_pos = vec2(player_pos.x + offset_x, player_pos.y + offset_y);
         vec u = unit_dir;
 
-        id = create_bullet(cur_weapon.bullet_type, bullet_pos);
-        ent[id].v = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
+        id = create_bullet(player.cur_weapon.bullet_type, bullet_pos);
+        ent[id].v = vec2(u.x * player.cur_weapon.bullet_speed, u.y * player.cur_weapon.bullet_speed);
         ent[id].u = u;
 
-        if (cur_weapon.bullets_per_shot >= 4) {
+        if (player.cur_weapon.bullets_per_shot >= 4) {
 
             u = vec2(-unit_dir.x, -unit_dir.y); // back
-            id = create_bullet(cur_weapon.bullet_type, bullet_pos);
-            ent[id].v = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
+            id = create_bullet(player.cur_weapon.bullet_type, bullet_pos);
+            ent[id].v = vec2(u.x * player.cur_weapon.bullet_speed, u.y * player.cur_weapon.bullet_speed);
             ent[id].u = u;
 
             u = vec2(unit_dir.y, -unit_dir.x); // right
-            id = create_bullet(cur_weapon.bullet_type, bullet_pos);
-            ent[id].v = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
+            id = create_bullet(player.cur_weapon.bullet_type, bullet_pos);
+            ent[id].v = vec2(u.x * player.cur_weapon.bullet_speed, u.y * player.cur_weapon.bullet_speed);
             ent[id].u = u;
 
             u = vec2(-unit_dir.y, unit_dir.x); // left
-            id = create_bullet(cur_weapon.bullet_type, bullet_pos);
-            ent[id].v = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
+            id = create_bullet(player.cur_weapon.bullet_type, bullet_pos);
+            ent[id].v = vec2(u.x * player.cur_weapon.bullet_speed, u.y * player.cur_weapon.bullet_speed);
             ent[id].u = u;
 
-            if (cur_weapon.bullets_per_shot >= 8) {
+            if (player.cur_weapon.bullets_per_shot >= 8) {
                 unit_dir = vec_rotate_u(unit_dir, vec2(0,0), vec2(M_PI/4, M_PI/4));
 
                 u = vec2(unit_dir.x, unit_dir.y); // org
-                id = create_bullet(cur_weapon.bullet_type, bullet_pos);
-                ent[id].v = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
+                id = create_bullet(player.cur_weapon.bullet_type, bullet_pos);
+                ent[id].v = vec2(u.x * player.cur_weapon.bullet_speed, u.y * player.cur_weapon.bullet_speed);
                 ent[id].u = u;
 
                 u = vec2(-unit_dir.x, -unit_dir.y); // back
-                id = create_bullet(cur_weapon.bullet_type, bullet_pos);
-                ent[id].v = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
+                id = create_bullet(player.cur_weapon.bullet_type, bullet_pos);
+                ent[id].v = vec2(u.x * player.cur_weapon.bullet_speed, u.y * player.cur_weapon.bullet_speed);
                 ent[id].u = u;
 
                 u = vec2(unit_dir.y, -unit_dir.x); // right
-                id = create_bullet(cur_weapon.bullet_type, bullet_pos);
-                ent[id].v = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
+                id = create_bullet(player.cur_weapon.bullet_type, bullet_pos);
+                ent[id].v = vec2(u.x * player.cur_weapon.bullet_speed, u.y * player.cur_weapon.bullet_speed);
                 ent[id].u = u;
 
                 u = vec2(-unit_dir.y, unit_dir.x); // right
-                id = create_bullet(cur_weapon.bullet_type, bullet_pos);
-                ent[id].v = vec2(u.x * cur_weapon.bullet_speed, u.y * cur_weapon.bullet_speed);
+                id = create_bullet(player.cur_weapon.bullet_type, bullet_pos);
+                ent[id].v = vec2(u.x * player.cur_weapon.bullet_speed, u.y * player.cur_weapon.bullet_speed);
                 ent[id].u = u;
             }
 
@@ -565,10 +584,10 @@ void decrease_fire_cd(float percent)
 
 void increase_fire_rate(int percent)
 {
-    float  amount = cur_weapon.fire_rate / 100 * percent;
-    cur_weapon.fire_rate = cur_weapon.fire_rate + amount;
-    if (cur_weapon.fire_rate > 20) cur_weapon.fire_rate = 20;
-    bullet_fire_cd = 1.0f/cur_weapon.fire_rate;
+    float  amount = player.cur_weapon.fire_rate / 100 * percent;
+    player.cur_weapon.fire_rate = player.cur_weapon.fire_rate + amount;
+    if (player.cur_weapon.fire_rate > 20) player.cur_weapon.fire_rate = 20;
+    bullet_fire_cd = 1.0f/player.cur_weapon.fire_rate;
 }
 
 void update_view(void)
@@ -613,15 +632,15 @@ void update_bullets(void)
         if (ent[i].valid) {
             entity *en = &ent[i];
             float d = distance(en->pos, ent[player_id].pos);
-            if (d > cur_weapon.fire_range) {
+            if (d > player.cur_weapon.fire_range) {
                 en->valid = 0;
                 if (en->type != ET_bullet_tank)
                     if (d > 150.0f)
                         en->valid = 0;
             }
 
-            en->pos.x += en->v.x * dt * cur_weapon.bullet_speed; // TODO @Hardcoded value
-            en->pos.y += en->v.y * dt * cur_weapon.bullet_speed;
+            en->pos.x += en->v.x * dt * player.cur_weapon.bullet_speed; // TODO @Hardcoded value
+            en->pos.y += en->v.y * dt * player.cur_weapon.bullet_speed;
 
             for (j=BULLET_ENTITY_MAX; j<=max_monster_id; ++j)
                 if (ent[j].valid) {
@@ -634,7 +653,7 @@ void update_bullets(void)
                                 ent[j].hp = ent[j].hp - dmg;
                                 add_game_text(en->pos, dmg, 0.33, 2);
                             } else {
-                                int dmg = get_random_int_range(cur_weapon.min_damage, cur_weapon.max_damage);
+                                int dmg = get_random_int_range(player.cur_weapon.min_damage, player.cur_weapon.max_damage);
                                 int color_id = 0;
                                 if (dmg > 25) color_id = 1;
                                 add_game_text(en->pos, dmg, 0.25, color_id);
@@ -724,7 +743,7 @@ void update_entities(void)
                     ent[player_id].hp -= 50.0f * dt;
                     if(ent[player_id].hp <= 0) {
                         ent[player_id].hp = 0;
-                        //program_mode = MODE_menu;   
+                        //program_mode = MODE_menu;
                     }
                     resolve_overlap(i, 0);
                 }
@@ -736,7 +755,7 @@ void update_entities(void)
                 if(en->picked) {
                     animate_v2_to_d(&en->pos, ent[player_id].pos, dt, 30.0f);
                     if(distance(en->pos, ent[player_id].pos) < 5)
-                        en->valid = 0;    
+                        en->valid = 0;
                     continue;
                 } else if (world_timer - en->created >= cfg.max_pickup_time)
                     en->valid = 0;
@@ -969,10 +988,10 @@ void process_game_input(vec *axis)
             // TODO instead of changing bullet, fire another weapon
             special_ammo--;
 
-            int cb = cur_weapon.bullet_type;
-            cur_weapon.bullet_type = ET_bullet_tank;
+            int cb = player.cur_weapon.bullet_type;
+            player.cur_weapon.bullet_type = ET_bullet_tank;
             fire_bullet();
-            cur_weapon.bullet_type = cb;
+            player.cur_weapon.bullet_type = cb;
         }
     }
     //if (is_key_just_pressed(MOUSE_BUTTON_LEFT)) {
@@ -1008,6 +1027,23 @@ void gameloop(void)
         ent[0].pos.x = player_pos.x;
         ent[0].pos.y = player_pos.y;
 
+        weapon_slot *cws = &player.weapon_slots[player.weapon];
+        if (cws->reloading == true)
+        {
+            if (world_timer - cws->reload_start >
+                weapon_info[player.weapon].reload_time)
+            {
+                cws->reloading = false;
+                if(cws->ammo > weapon_info[player.weapon].clip_size) {
+                    cws->ammo_in_clip = weapon_info[player.weapon].clip_size;
+                    cws->ammo -= weapon_info[player.weapon].clip_size;
+                } else {
+                    cws->ammo_in_clip = cws->ammo;
+                    cws->ammo = 0;
+                }
+            }
+        }
+
         update_entities();
         process_tick_raw(dt); // @TODO move other update related things to this
         render_game();
@@ -1030,15 +1066,22 @@ void gameloop(void)
 void game_init(void)
 {
     srand(time(0));
-    player_char = (character){
+    player = (character){
         .weapon = WT_pistol,
         .hp              = 100,
         .speed           = 50,
     };
-    
-    cur_weapon = weapon_info[player_char.weapon];
-    bullet_fire_cd = 1.0f / cur_weapon.fire_rate;
-    
+
+    int i;
+    for(i=0; i<5; i++)
+    {
+        player.weapon_slots[i].ammo = weapon_info[i].initial_ammo;
+        player.weapon_slots[i].ammo_in_clip = weapon_info[i].clip_size;
+    }
+
+    player.cur_weapon = weapon_info[player.weapon];
+    bullet_fire_cd = 1.0f / player.cur_weapon.fire_rate;
+
     font = load_font_from_disk(STR("../dat/fnt/karmina.otf"), get_heap_allocator());
     assert(font, "Failed loading karmina.otf, %d", GetLastError());
 

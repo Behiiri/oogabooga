@@ -193,7 +193,7 @@ void render_player(void)
 {
     Matrix4 m = m4_scalar(1.0);
     m         = m4_translate(m, v3(player_pos.x, player_pos.y, 0));;
-    Vector2 sz = v2(ent[player_id].size.x, ent[player_id].size.y);
+    Vector2 sz = v2(ent[player_id].w, ent[player_id].h);
     draw_image_xform(sprites[ET_player].tex, m, sz, COLOR_WHITE);
 }
 
@@ -401,7 +401,7 @@ void render_ui(void)
         pos.y -= p*o++;
         draw_image(g, pos, sz, COLOR_WHITE);
 
-        string str = tprint(STR("%0.1f"), cur_weapon.fire_rate);
+        string str = tprint(STR("%0.1f"), player.cur_weapon.fire_rate);
         Gfx_Text_Metrics str_metrics = measure_text(font, str, fh, v2(scale, scale));
 
         pos.y -= sz.y/2;
@@ -425,19 +425,26 @@ void render_ui(void)
 
     { // Weapon Icon and ammo count
         
-        Gfx_Image *g = sprites[cur_weapon.icon].tex;
-        Vector2 sz = get_scaled_sprite_size_v2(cur_weapon.icon);
+        Gfx_Image *g = sprites[player.cur_weapon.icon].tex;
+        Vector2 sz = get_scaled_sprite_size_v2(player.cur_weapon.icon);
         int y = 10;
         Vector2 pos = v2(w - x*3, y);
         draw_image(g, pos, sz, COLOR_WHITE);
 
-        // TODO show ammo count?
-        // string str = tprint(STR("%d"), kill_count);
-        // // Gfx_Text_Metrics str_metrics = measure_text(font, str, fh, v2(scale, scale));
+        y = sz.y + 3;
 
-        // pos.y = pos.y + sz.y/3;
-        // pos.x = pos.x + sz.x + 3;
-        // draw_text(font, str, fh, pos, v2(scale, scale), COLOR_WHITE);
+        string str_clip = tprint(STR("%d/%d"), player.weapon_slots[player.weapon].ammo_in_clip, weapon_info[player.weapon].clip_size);
+        Gfx_Text_Metrics scm = measure_text(font, str_clip, fh, v2(scale, scale));
+        y += scm.visual_size.y;
+        pos = v2(w - scm.functional_size.x - 10, y);
+        draw_text(font, str_clip, fh, pos, v2(scale, scale), COLOR_WHITE);
+
+        string str_ammo = tprint(STR("%d"), player.weapon_slots[player.weapon].ammo);
+        Gfx_Text_Metrics sam = measure_text(font, str_ammo, fh, v2(scale, scale));
+
+        y += sam.visual_size.y + 3;
+        pos = v2(w - sam.functional_size.x - 10, y);
+        draw_text(font, str_ammo, fh, pos, v2(scale, scale), COLOR_WHITE);
     }
     
     { // skull and kill count
