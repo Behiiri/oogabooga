@@ -116,7 +116,6 @@ enum
     X(UI_WT_pistol,      1.5f,    1,   "../dat/art/ui_wt_pistol.png",    16, 12) \
     X(UI_WT_auto,        1.5f,    1,   "../dat/art/ui_wt_auto.png",      16, 12) \
     X(UI_WT_shotgun,     1.5f,    1,   "../dat/art/ui_wt_shotgun.png",   16, 12)
-
 enum
 {
 #define X(name, scale, layer, filename, x, y) name,
@@ -281,7 +280,7 @@ typedef struct
     int dmg;
     int color;
     double create_time;
-    double duration;    
+    double duration;
 } game_text;
 
 #define MAX_DAMAGE_TEXTS 256
@@ -291,6 +290,14 @@ extern game_text damage_texts[MAX_DAMAGE_TEXTS];
 #define SCREEN_X (1280.0f/3*2)
 #define SCREEN_Y  (720.0f/3*2)
 
-#define DROP_CHANCE 10
+#define DROP_CHANCE 6
+#define AMMO_DROP_CHANCE (DROP_CHANCE + 6)
+
+enum {
+    COLOR_white,
+    COLOR_yellow,
+    COLOR_red,
+    COLOR_green
+};
 
 #endif

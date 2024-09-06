@@ -657,11 +657,11 @@ void update_bullets(void)
                             if (en->type == ET_bullet_tank) {
                                 int dmg = 99;
                                 ent[j].hp = ent[j].hp - dmg;
-                                add_game_text(en->pos, dmg, 0.33, 2);
+                                add_game_text(en->pos, dmg, 0.33, COLOR_red);
                             } else {
                                 int dmg = get_random_int_range(player.cur_weapon.min_damage, player.cur_weapon.max_damage);
-                                int color_id = 0;
-                                if (dmg > 25) color_id = 1;
+                                int color_id = COLOR_white;
+                                if (dmg > 25) color_id = COLOR_yellow;
                                 add_game_text(en->pos, dmg, 0.25, color_id);
                                 ent[j].hp = ent[j].hp - dmg;
                                 en->valid = 0;
@@ -706,7 +706,6 @@ void update_entities(void)
                     en->valid = 0;
                     kill_count++;
                     int rand = get_random_int_range(0, 100);
-                    int AMMO_DROP_CHANCE = DROP_CHANCE + 3;
                     if(rand < DROP_CHANCE)
                     {                        
                         int o = 2;
@@ -783,10 +782,12 @@ void update_entities(void)
                             increase_fire_rate(20);
                             break;
                         case ET_pickup_health:
-                            ent[player_id].hp += 20;
+                            int hp = 20;
+                            ent[player_id].hp += hp;
+                            add_game_text(en->pos, hp, 0.5f, COLOR_green);
                             break;
                         case ET_pickup_m:
-                            player.weapon_slots[player.weapon].ammo += 50;
+                            player.weapon_slots[player.weapon].ammo += 25;
                             break;
                     }
 
@@ -958,6 +959,13 @@ void process_game_input(vec *axis)
     if (is_key_down('D')) axis->x += 1.0f;
     if (is_key_down('S')) axis->y -= 1.0f;
     if (is_key_down('W')) axis->y += 1.0f;
+
+    if (is_key_down('1')) change_weapon(0);
+    if (is_key_down('2')) change_weapon(1);
+    if (is_key_down('3')) change_weapon(2);
+    if (is_key_down('4')) change_weapon(3);
+    if (is_key_down('5')) change_weapon(4);
+
 
     if (is_key_just_pressed('M')) {
         program_mode = MODE_menu;

@@ -584,8 +584,9 @@ void render_game_texts(void)
             game_text *t = &damage_texts[i];
             string str = tprint(STR("%d"), t->dmg);
             Vector4 color = COLOR_WHITE;
-            if(t->color == 1) color = v4(1,1,0,1);
-            if(t->color == 2) color = COLOR_RED;
+            if(t->color == COLOR_yellow) color = v4(1,1,0,1);
+            if(t->color == COLOR_red) color = COLOR_RED;
+            if(t->color == COLOR_green) color = COLOR_GREEN;
             draw_text(font, str, fh, v2(t->pos.x, t->pos.y), v2(s, s), color);
         }
     }
