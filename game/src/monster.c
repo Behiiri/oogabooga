@@ -4,10 +4,10 @@ monster monster_info[MONSTER_SPRITES_COUNT + 1] =
 {
 //     type       hp     power speed
 //  { ET__none,   999,   99,   99 },
-    { ET_mummy,     50,   10,   15 },
-    { ET_spider,    10,   10,   25 },
-    { ET_alien,     35,   10,   20 },
-    { ET_robot,     100,   10,  10 }
+    { ET_mummy,     50,   10,   10 },
+    { ET_spider,    10,   10,   20 },
+    { ET_alien,     35,   10,   15 },
+    { ET_robot,     100,   10,  5 }
 };
 
 inline entity_id monster_id(int i)

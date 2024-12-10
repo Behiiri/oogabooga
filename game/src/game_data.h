@@ -58,8 +58,8 @@ typedef struct
         vec size;
         struct { float w, h; };
     };
-    
-    uint32 valid;
+
+    int valid;
     int type;
     vec v;
     vec u;
@@ -68,9 +68,11 @@ typedef struct
     float radius;
     float created;
     float flash_dur;
-    Bool  should_flash;
-    Bool  picked;
-} entity;
+    vec   initial_pos;
+    uint8 should_flash : 1;
+    uint8 picked : 1;
+    uint8 rot : 6;
+} entity; // 72
 
 enum
 {
@@ -78,6 +80,15 @@ enum
     MODE_debug,
     MODE_menu
 };
+
+enum
+{
+    GS_normal,
+    GS_pause,
+    GS_levelup
+};
+
+extern int game_state;
 
 //    type               scale   layer path                               x    y
 #define ENTITY_TYPES_X                                                           \
@@ -171,7 +182,8 @@ typedef struct
 {
     int type;
     int slot;
-    int icon;
+    // int icon;
+    char* name;
     int bullet_type;
     int bullets_per_shot;
     float bullet_speed; // ??
@@ -232,6 +244,8 @@ typedef struct {
     float reload_start;
 } weapon_slot;
 
+extern int xp_table[10];
+
 typedef struct
 {
     int level;
@@ -243,7 +257,7 @@ typedef struct
     float speed;
     // char* name;
     // Gfx_Image* tex;
-    // Gfx_Image* icon ;
+    // Gfx_Image* icon;
 } character;
 
 extern character player;

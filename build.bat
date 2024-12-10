@@ -1,6 +1,6 @@
 @echo off
 if not exist build (
-	mkdir build
+        mkdir build
 )
 
 pushd build

@@ -25,7 +25,6 @@ pickups are percentage based now but it gets applied to current fire rate instea
 ** TODO implement better drop system
 ** TODO make pickup range variable
 ** DONE implement ammo for weapons
-
 * Bounties
 ** FIXED tank bullet can miss on obb, even when two sprites clearly overlap
 I forgot to apply scale for sprites, now it works OK
@@ -55,3 +54,26 @@ of sprite from it's position, but I'm not sure how this will affect rotation and
 ** TODO after changing the weapon, bullets from previous weapon applies damage and speed of the new weapon
 I just need to create bullet struct and put the each bullets data there
 this will also fix the range issue of the bullets which currently it is calculated based on the distance from the player
+
+* Expeditions
+** Random ablities
+earlier in development I had this idea of using a Medallion as abilities for the game but now I had this idea of using
+this medallion as a thing that can hold different gems and each gem can give a random ablity, these ablities will get
+active at random times in game and player can not active them until finding 4 or 5 gems (not sure about this) also I'm
+thinking about having 3 small gems next to the big ones and use them as an upgrade to the gem with same color, or if they
+are not same color it can give lesser power
+** crafting weapons
+randy is making a crafting game and I had this idea of what if monsters dropped resurces and we gathered
+those resources and used them for crafting weapong and upgrades, I was thinking about borderlands like weapon shop place
+and prey like weapon printer - also I was thinking about having weapon duriblities
+** Spaceship
+so the idea is to have spaceship and use that as static progress and the levels will be just a place where you
+kill monsters and find resources, you can have teleportation where you have to wait few seconds before being able to relay
+back to ship, ship can be upgraded 
+** Rescue and more
+should I add good old rescue elements to the game? imagine there are 5 hostages that I need to rescue from a large area to
+finish a game, rescue can be in form of teleporting them to spaceship or we can have missions with rescue or killing a boss
+or missions with killing certain amount of enemies or missions with surviving for x amount of time, also we can have story
+in middle of these missions. the idea of rescue comes from the robotron game
+** robot Character
+make main character a robot that rescue poeple and in the end sacrifices himself for humanity?

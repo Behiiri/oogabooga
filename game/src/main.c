@@ -21,10 +21,9 @@ static vec camera_pos;
 static character player;
 
 static int kill_count;
-
 static veci inner_spawn_box;
 static veci outer_spawn_box;
-
+static int game_state;
 
 config cfg = {
     .zoom = 2.5f,
@@ -34,12 +33,17 @@ config cfg = {
     .pickup_flash_dur = 3.0f
 };
 
+int xp_table[10] =
+{
+    100,   240,   620,   1600,   4000,
+    10000, 24000, 62000, 160000, 400000
+};
+
 vec vec2(float x, float y)
 {
     vec v = {x, y};
     return v;
 }
-
 
 vec vec_rotate_u(vec v, vec p, vec u)
 {
@@ -112,10 +116,10 @@ Bool check_obb_collision(obb* o1, obb* o2)
     // monsters has no rotation so thier dir is (0,0)
     vec a1 = o1->u;
     vec a2 = { -o1->u.y, o1->u.x };
-    // vec a3 = { 1, 0 };
-    // vec a4 = { 0, 1 };
-    vec a3 = o2->u;
-    vec a4 = { -o2->u.y, o2->u.x };
+    vec a3 = { 1, 0 };
+    vec a4 = { 0, 1 };
+    // vec a3 = o2->u;
+    // vec a4 = { -o2->u.y, o2->u.x };
     // edge lengths
     vec l1 = o1->e;
     vec l2 = o2->e;
@@ -337,22 +341,22 @@ vec get_random_pos_on_side(vec origin, int side)
     int ddy = rand() % (outer_spawn_box.y*2);
 
     switch(side) {
-        case LEFT: // 0
-            x = origin.x - dx;
-            y = origin.y - outer_spawn_box.y + ddy;
-            break;
-        case UP: // 1
-            x = origin.x - outer_spawn_box.x + ddx;
-            y = origin.y + dy;
-            break;
-        case RIGHT: // 2
-            x = origin.x + dx;
-            y = origin.y - outer_spawn_box.y + ddy;
-            break;
-        case DOWN: // 3
-            x = origin.x - outer_spawn_box.x + ddx;
-            y = origin.y - dy;
-            break;
+    case LEFT: // 0
+        x = origin.x - dx;
+        y = origin.y - outer_spawn_box.y + ddy;
+        break;
+    case UP: // 1
+        x = origin.x - outer_spawn_box.x + ddx;
+        y = origin.y + dy;
+        break;
+    case RIGHT: // 2
+        x = origin.x + dx;
+        y = origin.y - outer_spawn_box.y + ddy;
+        break;
+    case DOWN: // 3
+        x = origin.x - outer_spawn_box.x + ddx;
+        y = origin.y - dy;
+        break;
     }
 
     vec v = {x, y};
@@ -386,10 +390,10 @@ void change_weapon(int weapon_type)
     player.weapon = weapon_type;
     player.cur_weapon = weapon_info[weapon_type];
     if(player.weapon_slots[player.weapon].ammo_in_clip == 0)
-    {
-        player.weapon_slots[player.weapon].reload_start = world_timer;
-        player.weapon_slots[player.weapon].reloading = true;
-    }
+        {
+            player.weapon_slots[player.weapon].reload_start = world_timer;
+            player.weapon_slots[player.weapon].reloading = true;
+        }
     
     bullet_fire_cd = 1.0f/player.cur_weapon.fire_rate;
 }
@@ -397,7 +401,17 @@ void change_weapon(int weapon_type)
 void next_weapon(void)
 {
     player.weapon_slots[player.weapon].reloading = false;
-    player.weapon++;
+    int i;
+    for(i=0; i<5; i++)
+        {
+            int w = (player.weapon + i) % 5;
+            if (player.weapon_slots[w].occupied)
+                {
+                    player.weapon = w;
+                    break;
+                }
+        }
+    
     if (player.weapon == WT__count)
         player.weapon = WT_pistol;
     change_weapon(player.weapon);
@@ -645,7 +659,7 @@ void update_bullets(void)
                         en->valid = 0;
             }
 
-            en->pos.x += en->v.x * dt * player.cur_weapon.bullet_speed; // TODO @Hardcoded value
+            en->pos.x += en->v.x * dt * player.cur_weapon.bullet_speed;
             en->pos.y += en->v.y * dt * player.cur_weapon.bullet_speed;
 
             for (j=BULLET_ENTITY_MAX; j<=max_monster_id; ++j)
@@ -667,7 +681,7 @@ void update_bullets(void)
                                 en->valid = 0;
                             }
 
-                            ent[j].flash_dur = 0.065f;
+                            ent[j].flash_dur = 0.07f;
                             break;
                         }
                     }
@@ -719,6 +733,7 @@ void update_entities(void)
                         } else if (rand < c*o++) {
                             create_entity(ET_pickup_health, en->pos);
                         }
+                        player.xp += 20 * (player.level);
                     } else if(rand < AMMO_DROP_CHANCE)
                     {
                         create_entity(ET_pickup_m, en->pos);
@@ -761,7 +776,7 @@ void update_entities(void)
             }
 
             // pickups
-            if (is_pickup(en->type))
+            if  (is_pickup(en->type))
             {
                 if(en->picked) {
                     animate_v2_to_d(&en->pos, ent[player_id].pos, dt, 30.0f);
@@ -1031,7 +1046,9 @@ void gameloop(void)
     if (program_mode == MODE_game) {
         world_timer += dt;
         update_view();
-        
+
+
+        // @@ Reloading
         weapon_slot *cws = &player.weapon_slots[player.weapon];
         if (cws->reloading == true)
         {
@@ -1049,6 +1066,7 @@ void gameloop(void)
             }
         }
 
+        // @@ Player Input
         vec input_axis = (vec){0, 0};
         process_game_input(&input_axis);
 
@@ -1067,6 +1085,15 @@ void gameloop(void)
         ent[0].pos.x = player_pos.x;
         ent[0].pos.y = player_pos.y;
 
+        // @@ Leveling
+        // if(player.xp >= xp_table[player.level - 1]) {
+        //     player.level++;
+        //     game_state = GS_levelup;
+        // }
+
+        // if(game_state == GS_levelup)
+        //     dt = 0;
+
         update_entities();
         process_tick_raw(dt); // @TODO move other update related things to this
         render_game();
@@ -1074,8 +1101,7 @@ void gameloop(void)
     {
         process_menu_input();
         draw_menu_view();
-    }
-    else if (program_mode == MODE_debug)
+    } else if (program_mode == MODE_debug)
     {
         dt = 0;
         update_view();
@@ -1088,36 +1114,51 @@ void gameloop(void)
 
 void game_init(void)
 {
-    srand(time(0));
-    player = (character){
-        .weapon = WT_pistol,
-        .hp              = 100,
-        .speed           = 50,
-    };
+  srand(time(0));
+  player = (character){
+    .weapon = WT_pistol,
+    .hp              = 100,
+    .speed           = 50,
+  };
 
-    int i;
-    for(i=0; i<5; i++)
+  int i;
+  for(i=0; i<5; i++)
     {
-        player.weapon_slots[i].ammo = weapon_info[i].initial_ammo;
-        player.weapon_slots[i].ammo_in_clip = weapon_info[i].clip_size;
+      player.weapon_slots[i].ammo = weapon_info[i].initial_ammo;
+      player.weapon_slots[i].ammo_in_clip = weapon_info[i].clip_size;
+      player.weapon_slots[i].occupied = false;
     }
 
-    player.cur_weapon = weapon_info[player.weapon];
-    bullet_fire_cd = 1.0f / player.cur_weapon.fire_rate;
+  player.weapon_slots[0].occupied = true;
+    
+  player.cur_weapon = weapon_info[player.weapon];
+  bullet_fire_cd = 1.0f / player.cur_weapon.fire_rate;
 
-    font = load_font_from_disk(STR("../dat/fnt/karmina.otf"), get_heap_allocator());
-    assert(font, "Failed loading karmina.otf, %d", GetLastError());
+  player.xp = 0;
+  player.level = 0;
 
-    player_pos = cfg.player_start_pos;
+  //font = load_font_from_disk(STR("../dat/fnt/karmina.otf"), get_heap_allocator());
+  //assert(font, "Failed loading karmina.otf, %d", GetLastError());
 
-    inner_spawn_box = (veci){180, 120};
-    outer_spawn_box = (veci){240, 160};
-    assert(inner_spawn_box.x < outer_spawn_box.x);
-    assert(inner_spawn_box.y < outer_spawn_box.y);
+  // font = load_font_from_disk(STR("C:/Windows/Fonts/arial.ttf"), get_heap_allocator());
+  // assert(font, "Failed loading arial.ttf, %d", GetLastError());
 
-    render_init();
-    world_init();
-    menu_init();
+  font = load_font_from_disk(STR("../dat/fnt/OpenSans-CondBold.ttf"), get_heap_allocator());
+  assert(font, "Failed loading OpenSans-CondLight.ttf, %d", GetLastError());
+
+  bold_font = load_font_from_disk(STR("../dat/fnt/OpenSans-CondLight.ttf"), get_heap_allocator());
+  assert(bold_font, "Failed loading OpenSans-CondBold.ttf, %d", GetLastError());
+  
+  player_pos = cfg.player_start_pos;
+
+  inner_spawn_box = (veci){180, 120};
+  outer_spawn_box = (veci){240, 160};
+  assert(inner_spawn_box.x < outer_spawn_box.x);
+  assert(inner_spawn_box.y < outer_spawn_box.y);
+
+  render_init();
+  world_init();
+  menu_init();
 }
 
 int entry(int argc, char **argv)

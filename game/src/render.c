@@ -27,6 +27,10 @@ struct
 #undef X
 };
 
+Gfx_Font *font;
+Gfx_Font *bold_font;
+int font_height = 48;
+
 Vector2 get_scaled_sprite_size_v2(int type)
 {
     return v2(sprite_info[type].x * sprite_info[type].scale,
@@ -80,9 +84,6 @@ void draw_aabb(box b)
     draw_outline_rect(p0, p1, p2, p3, 0.5f, v4(0.2, 0.2, 0.2, 1.0));
 }
 
-
-extern Gfx_Font* font; 
-extern int font_height;
 void draw_monster_debug_details()
 {
     int i;
@@ -315,8 +316,6 @@ void render_tiles(void)
 
 extern Vector2 vec_to_v2(vec v);
 
-Gfx_Font *font;
-int font_height = 48;
 void draw_mouse_coordinates(void)
 {
     float mouse_x = input_frame.mouse_x;
@@ -423,28 +422,32 @@ void render_ui(void)
     }
 
 
-    { // Weapon Icon and ammo count
-        
-        Gfx_Image *g = sprites[player.cur_weapon.icon].tex;
-        Vector2 sz = get_scaled_sprite_size_v2(player.cur_weapon.icon);
-        int y = 10;
+    { // Weapon name and ammo count
+        int y = 0;
+        int p = 3;
         Vector2 pos = v2(w - x*3, y);
-        draw_image(g, pos, sz, COLOR_WHITE);
+        scale = 0.25f;
 
-        y = sz.y + 3;
+        { // weapon name
+          Vector2 sc = v2(scale, scale);
+          string str = tprint(STR("%s"), weapon_info[player.weapon].name);
+          Gfx_Text_Metrics m = measure_text(bold_font, str, fh, sc);
+          y += p;
+          pos = v2(w - m.functional_size.x - p, y);
+          draw_text(bold_font, str, fh, pos, sc, COLOR_WHITE);
+          y += m.visual_size.y;
+        }
 
-        string str_clip = tprint(STR("%d/%d"), player.weapon_slots[player.weapon].ammo_in_clip, weapon_info[player.weapon].clip_size);
-        Gfx_Text_Metrics scm = measure_text(font, str_clip, fh, v2(scale, scale));
-        y += scm.visual_size.y;
-        pos = v2(w - scm.functional_size.x - 10, y);
-        draw_text(font, str_clip, fh, pos, v2(scale, scale), COLOR_WHITE);
-
-        string str_ammo = tprint(STR("%d"), player.weapon_slots[player.weapon].ammo);
-        Gfx_Text_Metrics sam = measure_text(font, str_ammo, fh, v2(scale, scale));
-
-        y += sam.visual_size.y + 3;
-        pos = v2(w - sam.functional_size.x - 10, y);
-        draw_text(font, str_ammo, fh, pos, v2(scale, scale), COLOR_WHITE);
+        
+        // ammo count
+        {
+          Vector2 sc = v2(scale, scale);
+          string str = tprint(STR("%d + %d"), player.weapon_slots[player.weapon].ammo_in_clip, player.weapon_slots[player.weapon].ammo);
+          Gfx_Text_Metrics m = measure_text(font, str, fh, sc);
+          y += m.functional_size.y;
+          pos = v2(w - m.functional_size.x - p, y);
+          draw_text(font, str, fh, pos, sc, COLOR_WHITE);
+        }
     }
     
     { // skull and kill count
@@ -615,9 +618,12 @@ void render_game(void)
     
     render_ui();
 
-    //
-    // UI
-    //
+    if(game_state == GS_levelup)
+    {
+        
+    }
+    
+
     if(program_mode == MODE_debug)
         if(selected_debug_entity_id != -1)
             render_debug_ui();
